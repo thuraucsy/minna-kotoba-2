@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart'; // computer using
 void main() => runApp(MyApp());
 
 Future<List<Chapter>> fetchPhotos(context) async {
-  final response = await DefaultAssetBundle.of(context).loadString('assets/data.json');
+  final response =
+      await DefaultAssetBundle.of(context).loadString('assets/data.json');
   return compute(parseChapters, response);
 }
 
@@ -33,11 +34,44 @@ class MyApp extends StatelessWidget {
               return snapshot.hasData
                   ? VocalList(chapters: snapshot.data)
                   : Center(child: CircularProgressIndicator());
-            }
-        )
+            }),
+        drawer: FutureBuilder(
+            future: fetchPhotos(context),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) print(snapshot.error);
+
+              return Drawer(
+                child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: _buildDrawerList(context, snapshot.data)),
+              );
+            }),
       ),
     );
   }
+}
+
+List<Widget> _buildDrawerList(BuildContext context, List<Chapter> chapters) {
+  List<Widget> drawer = [
+    DrawerHeader(
+      child: Text('Drawer Header'),
+      decoration: BoxDecoration(
+        color: Colors.blue,
+      ),
+    ),
+  ];
+
+  List<Widget> chapterTile = [];
+  chapters.forEach((chapter) {
+    chapterTile.add(new ListTile(
+      title: Text(chapter.title),
+      trailing: Icon(Icons.arrow_forward),
+    ));
+  });
+
+  drawer.addAll(chapterTile);
+
+  return drawer;
 }
 
 class Vocal {
@@ -67,7 +101,6 @@ class Chapter {
   Chapter({this.title, this.words});
 
   factory Chapter.fromJson(Map<String, dynamic> json) {
-
     var list = json['words'] as List;
     List<Vocal> vocalList = list.map((i) => Vocal.fromJson(i)).toList();
 
@@ -85,14 +118,12 @@ class VocalList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return ListView.builder(
         itemCount: chapters.length,
         itemBuilder: (context, index) {
-          final vocal = chapters[index];
+          final chapter = chapters[index];
 
-          return Text(vocal.title);
-        }
-    );
+          return Text(chapter.title);
+        });
   }
 }
