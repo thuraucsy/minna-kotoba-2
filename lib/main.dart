@@ -15,7 +15,46 @@ List<Chapter> parseChapters(String responseBody) {
   return parsed.map<Chapter>((json) => Chapter.fromJson(json)).toList();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => new _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  int drawerIndex = 0;
+
+  List<Widget> _buildDrawerList(
+      BuildContext context, List<Chapter> chapters) {
+    List<Widget> drawer = [
+      DrawerHeader(
+        child: Text('Drawer Header'),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+        ),
+      ),
+    ];
+
+    List<Widget> chapterTile = [];
+    for (int i = 0; i < chapters.length; i++) {
+      Chapter chapter = chapters[i];
+      chapterTile.add(new ListTile(
+        title: Text(chapter.title),
+        trailing: Icon(Icons.arrow_forward),
+        onTap: () {
+          setState(() {
+            drawerIndex = i;
+          });
+          print('index $i $drawerIndex');
+          Navigator.of(context).pop(); // dismiss the navigator
+        },
+      ));
+    }
+
+    drawer.addAll(chapterTile);
+
+    return drawer;
+  }
+
   @override
   Widget build(BuildContext context) {
     final appTitle = 'Minna Kotoba 2';
@@ -32,7 +71,7 @@ class MyApp extends StatelessWidget {
               if (snapshot.hasError) print(snapshot.error);
 
               return snapshot.hasData
-                  ? VocalList(chapters: snapshot.data)
+                  ? VocalList(chapter: snapshot.data[drawerIndex])
                   : Center(child: CircularProgressIndicator());
             }),
         drawer: FutureBuilder(
@@ -40,38 +79,18 @@ class MyApp extends StatelessWidget {
             builder: (context, snapshot) {
               if (snapshot.hasError) print(snapshot.error);
 
-              return Drawer(
-                child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: _buildDrawerList(context, snapshot.data)),
-              );
+              return snapshot.hasData
+                  ? Drawer(
+                      child: ListView(
+                          padding: EdgeInsets.zero,
+                          children: _buildDrawerList(
+                              context, snapshot.data)),
+                    )
+                  : Center(child: CircularProgressIndicator());
             }),
       ),
     );
   }
-}
-
-List<Widget> _buildDrawerList(BuildContext context, List<Chapter> chapters) {
-  List<Widget> drawer = [
-    DrawerHeader(
-      child: Text('Drawer Header'),
-      decoration: BoxDecoration(
-        color: Colors.blue,
-      ),
-    ),
-  ];
-
-  List<Widget> chapterTile = [];
-  chapters.forEach((chapter) {
-    chapterTile.add(new ListTile(
-      title: Text(chapter.title),
-      trailing: Icon(Icons.arrow_forward),
-    ));
-  });
-
-  drawer.addAll(chapterTile);
-
-  return drawer;
 }
 
 class Vocal {
@@ -112,18 +131,17 @@ class Chapter {
 }
 
 class VocalList extends StatelessWidget {
-  final List<Chapter> chapters;
+  final Chapter chapter;
 
-  VocalList({Key key, this.chapters}) : super(key: key);
+  VocalList({Key key, this.chapter}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        itemCount: chapters.length,
-        itemBuilder: (context, index) {
-          final chapter = chapters[index];
 
-          return Text(chapter.title);
+    return ListView.builder(
+        itemCount: chapter.words.length,
+        itemBuilder: (context, index) {
+          return Text(chapter.words[index].hiragana);
         });
   }
 }
