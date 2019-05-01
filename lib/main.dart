@@ -71,7 +71,7 @@ class _MyAppState extends State<MyApp> {
               if (snapshot.hasError) print(snapshot.error);
 
               return snapshot.hasData
-                  ? VocalList(chapter: snapshot.data[drawerIndex])
+                  ? VocalList(chapter: snapshot.data[drawerIndex], drawerIndex: drawerIndex,)
                   : Center(child: CircularProgressIndicator());
             }),
         drawer: FutureBuilder(
@@ -132,8 +132,9 @@ class Chapter {
 
 class VocalList extends StatelessWidget {
   final Chapter chapter;
+  final int drawerIndex;
 
-  VocalList({Key key, this.chapter}) : super(key: key);
+  VocalList({Key key, this.chapter, this.drawerIndex}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +142,20 @@ class VocalList extends StatelessWidget {
     return ListView.builder(
         itemCount: chapter.words.length,
         itemBuilder: (context, index) {
-          return Text(chapter.words[index].hiragana);
+          return ListTile(
+            trailing: Text("${drawerIndex+1}/${index+1}"),
+            title: Text(chapter.words[index].hiragana),
+            subtitle: Text(chapter.words[index].myanmar, style: TextStyle(fontFamily: 'Masterpiece'),),
+//            selected: true,
+//            isThreeLine: true,
+//            contentPadding: EdgeInsets.symmetric(vertical: 5),
+            onTap: () {
+
+            },
+            onLongPress: () {
+
+            },
+          );
         });
   }
 }
