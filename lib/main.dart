@@ -1,6 +1,7 @@
 import 'dart:convert'; // json using
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // computer using
+import 'package:flutter/foundation.dart'; // compute using
+import 'package:flutter_tts/flutter_tts.dart';
 
 void main() => runApp(MyApp());
 
@@ -22,6 +23,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   int drawerIndex = 0;
+  FlutterTts flutterTts;
+
+  Future _speak() async{
+    var result = await flutterTts.speak("Hello World");
+  }
 
   List<Widget> _buildDrawerList(
       BuildContext context, List<Chapter> chapters) {
@@ -45,6 +51,7 @@ class _MyAppState extends State<MyApp> {
             drawerIndex = i;
           });
           print('index $i $drawerIndex');
+          _speak();
           Navigator.of(context).pop(); // dismiss the navigator
         },
       ));
@@ -58,6 +65,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final appTitle = 'Minna Kotoba 2';
+    flutterTts = FlutterTts();
 
     return MaterialApp(
       title: appTitle,
