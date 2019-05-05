@@ -23,14 +23,18 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   int drawerIndex = 0;
+  bool isShowDrawerMenu = true;
+  List<Chapter> chapters;
   FlutterTts flutterTts;
+  ScrollController _scrollController = new ScrollController();
 
-  Future _speak() async{
-    var result = await flutterTts.speak("Hello World");
+  Future _speak(text) async {
+    // ～
+    text = text.replaceAll(new RegExp(r'～'), '　');
+    var result = await flutterTts.speak(text);
   }
 
-  List<Widget> _buildDrawerList(
-      BuildContext context, List<Chapter> chapters) {
+  List<Widget> _buildDrawerList(BuildContext context, List<Chapter> chapters) {
     List<Widget> drawer = [
       DrawerHeader(
         child: Text('Drawer Header'),
@@ -51,8 +55,8 @@ class _MyAppState extends State<MyApp> {
             drawerIndex = i;
           });
           print('index $i $drawerIndex');
-          _speak();
           Navigator.of(context).pop(); // dismiss the navigator
+          _scrollController.animateTo(0.0, duration: Duration(milliseconds: 500), curve: Curves.easeOut);
         },
       ));
     }
@@ -62,40 +66,103 @@ class _MyAppState extends State<MyApp> {
     return drawer;
   }
 
+  ListView _buildBodyList(BuildContext context, Chapter chapter) {
+    return ListView.builder(
+        controller: _scrollController,
+        itemCount: chapter.words.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            trailing: Text("${drawerIndex + 1}/${index + 1}"),
+            title: Text(chapter.words[index].hiragana),
+            subtitle: Text(
+              chapter.words[index].myanmar,
+              style: TextStyle(fontFamily: 'Masterpiece'),
+            ),
+//            selected: true,
+//            isThreeLine: true,
+//            contentPadding: EdgeInsets.symmetric(vertical: 5),
+            onTap: () {
+              _speak(chapter.words[index].hiragana);
+            },
+            onLongPress: () {},
+          );
+        });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print('initState');
+    fetchPhotos(context).then((data) {
+      print('initState data ${data.length}');
+      setState(() {
+        chapters = data;
+      });
+    }).catchError((error) {
+      print('initState error $error');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appTitle = 'Minna Kotoba 2';
     flutterTts = FlutterTts();
+    flutterTts.isLanguageAvailable("ja-JP").then((res) {
+      print('ja-JP TTS lang available $res');
+      if (res) flutterTts.setLanguage("ja-JP");
+    });
 
     return MaterialApp(
       title: appTitle,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text(appTitle),
+      home: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          appBar: AppBar(title: Text(appTitle)),
+          drawer: isShowDrawerMenu
+              ? Builder(builder: (context) {
+                  return chapters != null
+                      ? Drawer(
+                          child: ListView(
+                              padding: EdgeInsets.zero,
+                              children: _buildDrawerList(context, chapters)),
+                        )
+                      : Center(child: CircularProgressIndicator());
+                })
+              : null,
+          body: TabBarView(
+            children: [
+              chapters != null
+                  ? _buildBodyList(context, chapters[drawerIndex])
+                  : Center(child: CircularProgressIndicator()),
+              chapters != null
+                  ? _buildBodyList(context, chapters[drawerIndex])
+                  : Center(child: CircularProgressIndicator()),
+              Icon(Icons.settings),
+            ],
+            physics: NeverScrollableScrollPhysics(),
+          ),
+          bottomNavigationBar: TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.format_list_numbered_rtl)),
+              Tab(icon: Icon(Icons.search)),
+              Tab(icon: Icon(Icons.settings)),
+            ],
+            onTap: (int index) {
+              print('tab index $index');
+              if (index == 0) {
+                setState(() {
+                  isShowDrawerMenu = true;
+                });
+              } else {
+                setState(() {
+                  isShowDrawerMenu = false;
+                });
+              }
+            },
+            labelColor: Colors.black,
+            isScrollable: false,
+          ),
         ),
-        body: FutureBuilder(
-            future: fetchPhotos(context),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) print(snapshot.error);
-
-              return snapshot.hasData
-                  ? VocalList(chapter: snapshot.data[drawerIndex], drawerIndex: drawerIndex,)
-                  : Center(child: CircularProgressIndicator());
-            }),
-        drawer: FutureBuilder(
-            future: fetchPhotos(context),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) print(snapshot.error);
-
-              return snapshot.hasData
-                  ? Drawer(
-                      child: ListView(
-                          padding: EdgeInsets.zero,
-                          children: _buildDrawerList(
-                              context, snapshot.data)),
-                    )
-                  : Center(child: CircularProgressIndicator());
-            }),
       ),
     );
   }
@@ -135,35 +202,5 @@ class Chapter {
       title: json['title'] as String,
       words: vocalList,
     );
-  }
-}
-
-class VocalList extends StatelessWidget {
-  final Chapter chapter;
-  final int drawerIndex;
-
-  VocalList({Key key, this.chapter, this.drawerIndex}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-
-    return ListView.builder(
-        itemCount: chapter.words.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            trailing: Text("${drawerIndex+1}/${index+1}"),
-            title: Text(chapter.words[index].hiragana),
-            subtitle: Text(chapter.words[index].myanmar, style: TextStyle(fontFamily: 'Masterpiece'),),
-//            selected: true,
-//            isThreeLine: true,
-//            contentPadding: EdgeInsets.symmetric(vertical: 5),
-            onTap: () {
-
-            },
-            onLongPress: () {
-
-            },
-          );
-        });
   }
 }
