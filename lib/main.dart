@@ -2,8 +2,12 @@ import 'dart:convert'; // json using
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // compute using
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:preferences/preferences.dart'; // setting page
 
-void main() => runApp(MyApp());
+void main() async {
+  await PrefService.init(prefix: 'pref_');
+  runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override
@@ -18,6 +22,9 @@ class _MyAppState extends State<MyApp> {
   List<ListItem> allWords = [];
   List<ListItem> allWordsBackup = [];
   ScrollController _scrollController = new ScrollController();
+  // setting variables
+  final List<String> listJapanese = ['Hiragana', 'Kanji', 'Romaji'];
+  final List<String> listMeaning = ['Myanmar', 'English'];
 
   Future _speak(text) async {
     // ～
@@ -59,20 +66,39 @@ class _MyAppState extends State<MyApp> {
   }
 
   ListView _buildBodyList(BuildContext context, Chapter chapter) {
+    print('pref ${PrefService.getString("list_japanese")} ${PrefService.getString("list_meaning")}');
+
+    String selectedJapanese = listJapanese[0];
+    String selectedMeaning = listMeaning[0];
+
+    if (PrefService.getString("list_japanese") != null) {
+      selectedJapanese = PrefService.getString("list_japanese");
+    }
+    if (PrefService.getString("list_meaning") != null) {
+      selectedMeaning = PrefService.getString("list_meaning");
+    }
+
     return ListView.builder(
         controller: _scrollController,
         itemCount: chapter.words.length,
         itemBuilder: (context, index) {
+
+          Text japaneseText = Text(chapter.words[index].hiragana);
+          if (selectedJapanese == listJapanese[1]) {
+            japaneseText = Text(chapter.words[index].kanji);
+          } else if (selectedJapanese == listJapanese[2]) {
+            japaneseText = Text(chapter.words[index].romaji);
+          }
+
+          Text meaningText = Text(chapter.words[index].myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
+          if (selectedMeaning == listMeaning[1]) {
+            meaningText = Text(chapter.words[index].english);
+          }
+
           return ListTile(
             trailing: Text("${drawerIndex + 1}/${index + 1}"),
-            title: Text(chapter.words[index].hiragana),
-            subtitle: Text(
-              chapter.words[index].myanmar,
-              style: TextStyle(fontFamily: 'Masterpiece'),
-            ),
-//            selected: true,
-//            isThreeLine: true,
-//            contentPadding: EdgeInsets.symmetric(vertical: 5),
+            title: japaneseText,
+            subtitle: meaningText,
             onTap: () {
               _speak(chapter.words[index].hiragana);
             },
@@ -162,6 +188,25 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  PreferencePage _preferencePage() {
+
+    return PreferencePage([
+      PreferenceTitle("List"),
+      DropdownPreference(
+        'Japanese',
+        'list_japanese',
+        defaultVal: listJapanese[0],
+        values: listJapanese,
+      ),
+      DropdownPreference(
+        'Meaning',
+        'list_meaning',
+        defaultVal: listMeaning[0],
+        values: listMeaning,
+      )
+    ]);
+  }
+
   @override
   void initState() {
     print('initState');
@@ -220,7 +265,7 @@ class _MyAppState extends State<MyApp> {
                   ? _buildSearchBodyList(context)
                   : Center(child: CircularProgressIndicator()),
               Icon(Icons.favorite),
-              Icon(Icons.settings),
+              _preferencePage(),
             ],
             physics: NeverScrollableScrollPhysics(),
           ),
