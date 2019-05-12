@@ -17,11 +17,14 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int drawerIndex = 0;
   bool isShowDrawerMenu = true;
+  bool isShowFavMenu = false;
   List<Chapter> chapters;
+  List<ListItem> allWords;
   FlutterTts flutterTts;
-  List<ListItem> allWords = [];
   List<ListItem> allWordsBackup = [];
   ScrollController _scrollController = new ScrollController();
+  Set _favoriteList = Set<String>();
+  TextEditingController _searchController = TextEditingController(text: "");
   // setting variables
   final List<String> listJapanese = ['Hiragana', 'Kanji', 'Romaji'];
   final List<String> listMeaning = ['Myanmar', 'English'];
@@ -30,6 +33,18 @@ class _MyAppState extends State<MyApp> {
     // ～
     text = text.replaceAll(new RegExp(r'～'), '　');
     var result = await flutterTts.speak(text);
+  }
+
+  void _toggleFav(no, isFav) {
+    setState(() {
+      if (isFav) {
+        _favoriteList.remove(no);
+      } else {
+        _favoriteList.add(no);
+      }
+    });
+    print('long press ${no} $isFav');
+    PrefService.setStringList("list_favorite", _favoriteList.toList());
   }
 
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> chapters) {
@@ -66,7 +81,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   ListView _buildBodyList(BuildContext context, Chapter chapter) {
-    print('pref ${PrefService.getString("list_japanese")} ${PrefService.getString("list_meaning")}');
+    print(
+        'pref ${PrefService.getString("list_japanese")} ${PrefService.getString("list_meaning")} ${PrefService.getStringList("list_favorite")}');
 
     String selectedJapanese = listJapanese[0];
     String selectedMeaning = listMeaning[0];
@@ -78,11 +94,14 @@ class _MyAppState extends State<MyApp> {
       selectedMeaning = PrefService.getString("list_meaning");
     }
 
+    if (PrefService.getStringList("list_favorite") != null) {
+      _favoriteList = PrefService.getStringList("list_favorite").toSet();
+    }
+
     return ListView.builder(
         controller: _scrollController,
         itemCount: chapter.words.length,
         itemBuilder: (context, index) {
-
           Text japaneseText = Text(chapter.words[index].hiragana);
           if (selectedJapanese == listJapanese[1]) {
             japaneseText = Text(chapter.words[index].kanji);
@@ -90,19 +109,31 @@ class _MyAppState extends State<MyApp> {
             japaneseText = Text(chapter.words[index].romaji);
           }
 
-          Text meaningText = Text(chapter.words[index].myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
+          Text meaningText = Text(chapter.words[index].myanmar,
+              style: TextStyle(fontFamily: 'Masterpiece'));
           if (selectedMeaning == listMeaning[1]) {
             meaningText = Text(chapter.words[index].english);
           }
 
+          // favorite condition
+          bool isFav = _favoriteList.contains(chapter.words[index].no);
+
           return ListTile(
-            trailing: Text("${drawerIndex + 1}/${index + 1}"),
+            trailing: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                Text(chapter.words[index].no),
+              ],
+            ),
             title: japaneseText,
             subtitle: meaningText,
             onTap: () {
               _speak(chapter.words[index].hiragana);
             },
-            onLongPress: () {},
+            onLongPress: () {
+              _toggleFav(chapter.words[index].no, isFav);
+            },
           );
         });
   }
@@ -136,13 +167,28 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Container _buildSearchBodyList(BuildContext context) {
+  Container _buildSearchBodyList(BuildContext context,
+      {bool isFavPage = false}) {
+    List<Vocal> favWords = [];
+    if (isFavPage) {
+      for (int i = 0; i < allWords.length; i++) {
+        if (allWords[i] is Vocal) {
+          Vocal word = allWords[i] as Vocal;
+          if (_favoriteList.contains(word.no)) {
+            favWords.add(word);
+          }
+        }
+      }
+    }
+
     return Container(
       child: Column(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              style: TextStyle(fontFamily: 'Masterpiece'),
+              controller: _searchController,
               onChanged: (value) {
                 print('search onChanged $value');
                 filterSearchResults(value);
@@ -158,28 +204,67 @@ class _MyAppState extends State<MyApp> {
           Expanded(
             child: ListView.builder(
                 controller: _scrollController,
-                itemCount: allWords.length,
+                itemCount: isFavPage ? favWords.length : allWords.length,
                 itemBuilder: (context, index) {
-                  if (allWords[index] is ChapterTitle) {
-                    ChapterTitle chapterTitle = allWords[index] as ChapterTitle;
+                  if (isFavPage) {
                     return ListTile(
-                        title: Text(
-                      chapterTitle.title,
-                      style: Theme.of(context).textTheme.headline,
-                    ));
-                  } else if (allWords[index] is Vocal) {
-                    Vocal vocal = allWords[index] as Vocal;
-                    return ListTile(
-                      title: Text(vocal.hiragana),
+                      title: Text(favWords[index].hiragana),
                       subtitle: Text(
-                        vocal.myanmar,
+                        favWords[index].myanmar,
                         style: TextStyle(fontFamily: 'Masterpiece'),
                       ),
+                      trailing: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(Icons.favorite, color: Colors.redAccent),
+                          Text(favWords[index].no),
+                        ],
+                      ),
+//                      trailing: Text(favWords[index].no),
                       onTap: () {
-                        _speak(vocal.hiragana);
+                        _speak(favWords[index].hiragana);
                       },
-                      onLongPress: () {},
+                      onLongPress: () {
+                        _toggleFav(favWords[index].no, true);
+                      },
                     );
+                  } else {
+                    if (allWords[index] is ChapterTitle) {
+                      ChapterTitle chapterTitle =
+                          allWords[index] as ChapterTitle;
+                      return ListTile(
+                          title: Text(
+                        chapterTitle.title,
+                        style: Theme.of(context).textTheme.headline,
+                      ));
+                    } else if (allWords[index] is Vocal) {
+                      Vocal vocal = allWords[index] as Vocal;
+
+                      // favorite condition
+                      bool isFav = _favoriteList.contains(vocal.no);
+
+                      return ListTile(
+                        title: Text(vocal.hiragana),
+                        subtitle: Text(
+                          vocal.myanmar,
+                          style: TextStyle(fontFamily: 'Masterpiece'),
+                        ),
+                        trailing: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                                isFav ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                            Text(vocal.no),
+                          ],
+                        ),
+                        onTap: () {
+                          _speak(vocal.hiragana);
+                        },
+                        onLongPress: () {
+                          _toggleFav(vocal.no, isFav);
+                        },
+                      );
+                    }
                   }
                 }),
           )
@@ -189,7 +274,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   PreferencePage _preferencePage() {
-
     return PreferencePage([
       PreferenceTitle("List"),
       DropdownPreference(
@@ -210,6 +294,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     print('initState');
+    allWords = [];
 
     fetchPhotos(context).then((data) {
       print('initState data ${data.length}');
@@ -239,12 +324,52 @@ class _MyAppState extends State<MyApp> {
       if (res) flutterTts.setLanguage("ja-JP");
     });
 
+    void _clearFav() {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          // return object of type Dialog
+          return AlertDialog(
+            title: new Text("Alert Dialog title"),
+            content: new Text("Alert Dialog body"),
+            actions: <Widget>[
+              // usually buttons at the bottom of the dialog
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return MaterialApp(
       title: appTitle,
       home: DefaultTabController(
         length: 4,
         child: Scaffold(
-          appBar: AppBar(title: Text(appTitle)),
+          appBar: isShowFavMenu
+              ? AppBar(
+                  title: Text(appTitle),
+                  actions: <Widget>[
+                    IconButton(
+                        icon: Icon(Icons.delete_outline, color: Colors.white),
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Dialog(
+                                  child: Text('Dialog.'),
+                                );
+                              });
+                        }
+                    )
+                  ],
+                )
+              : AppBar(title: Text(appTitle)),
           drawer: isShowDrawerMenu
               ? Builder(builder: (context) {
                   return chapters != null
@@ -261,10 +386,12 @@ class _MyAppState extends State<MyApp> {
               chapters != null
                   ? _buildBodyList(context, chapters[drawerIndex])
                   : Center(child: CircularProgressIndicator()),
-              chapters != null
+              allWords != null
                   ? _buildSearchBodyList(context)
                   : Center(child: CircularProgressIndicator()),
-              Icon(Icons.favorite),
+              allWords != null
+                  ? _buildSearchBodyList(context, isFavPage: true)
+                  : Center(child: CircularProgressIndicator()),
               _preferencePage(),
             ],
             physics: NeverScrollableScrollPhysics(),
@@ -273,18 +400,24 @@ class _MyAppState extends State<MyApp> {
             tabs: [
               Tab(icon: Icon(Icons.format_list_numbered_rtl)),
               Tab(icon: Icon(Icons.search)),
-              Tab(icon: Icon(Icons.favorite)),
+              Tab(icon: Icon(Icons.favorite, color: Colors.redAccent)),
               Tab(icon: Icon(Icons.settings)),
             ],
             onTap: (int index) {
               print('tab index $index');
+
+              setState(() {
+                isShowDrawerMenu = false;
+                isShowFavMenu = false;
+              });
+
               if (index == 0) {
                 setState(() {
                   isShowDrawerMenu = true;
                 });
-              } else {
+              } else if (index == 2) {
                 setState(() {
-                  isShowDrawerMenu = false;
+                  isShowFavMenu = true;
                 });
               }
             },
@@ -301,16 +434,24 @@ class _MyAppState extends State<MyApp> {
 abstract class ListItem {}
 
 class Vocal implements ListItem {
+  final String no;
   final String romaji;
   final String hiragana;
   final String kanji;
   final String english;
   final String myanmar;
 
-  Vocal({this.romaji, this.hiragana, this.kanji, this.english, this.myanmar});
+  Vocal(
+      {this.no,
+      this.romaji,
+      this.hiragana,
+      this.kanji,
+      this.english,
+      this.myanmar});
 
   factory Vocal.fromJson(Map<String, dynamic> json) {
     return Vocal(
+      no: json['no'] as String,
       romaji: json['romaji'] as String,
       hiragana: json['hiragana'] as String,
       kanji: json['kanji'] as String,
