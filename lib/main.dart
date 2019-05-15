@@ -5,9 +5,16 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:preferences/preferences.dart'; // setting page
 import 'package:minna_kotoba_2/Chapter.dart';
 
+enum ConfirmAction { CANCCEL, ACCEPT }
+
 void main() async {
   await PrefService.init(prefix: 'pref_');
-  runApp(MyApp());
+  runApp(
+    MaterialApp(
+      title: "Minna Kotoba 2",
+      home: MyApp(),
+    )
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -56,7 +63,7 @@ class _MyAppState extends State<MyApp> {
 
       searchList.forEach((item) {
         if (item is Vocal &&
-            (item.romaji.contains(value) ||
+            (item.romaji.startsWith(value) ||
                 item.hiragana.contains(value) ||
                 item.kanji.contains(value) ||
                 item.english.contains(value) ||
@@ -333,20 +340,27 @@ class _MyAppState extends State<MyApp> {
       if (res) _flutterTts.setLanguage("ja-JP");
     });
 
-    void _clearFav() {
-      showDialog(
+    Future<ConfirmAction> _clearFav() {
+      // flutter defined function
+      return showDialog(
         context: context,
         builder: (BuildContext context) {
           // return object of type Dialog
           return AlertDialog(
-            title: new Text("Alert Dialog title"),
-            content: new Text("Alert Dialog body"),
+            title: new Text("Reset favorite?"),
+            content: new Text("This will clear the favorite list."),
             actions: <Widget>[
               // usually buttons at the bottom of the dialog
-              new FlatButton(
+              FlatButton(
                 child: new Text("Close"),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(ConfirmAction.CANCCEL);
+                },
+              ),
+              FlatButton(
+                child: new Text("Clear"),
+                onPressed: () {
+                  Navigator.of(context).pop(ConfirmAction.ACCEPT);
                 },
               ),
             ],
@@ -366,14 +380,17 @@ class _MyAppState extends State<MyApp> {
                   actions: <Widget>[
                     IconButton(
                         icon: Icon(Icons.delete_outline, color: Colors.white),
-                        onPressed: () {
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return Dialog(
-                                  child: Text('Dialog.'),
-                                );
-                              });
+                        onPressed: () async {
+                          ConfirmAction action = await _clearFav();
+                          print('ConfirmAction $action');
+
+                          if (action == ConfirmAction.ACCEPT) {
+                            print('Clearing the favorite list');
+                            setState(() {
+                              _favoriteList.clear();
+                            });
+                            PrefService.setStringList("list_favorite", []);
+                          }
                         }
                     )
                   ],
