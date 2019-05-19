@@ -4,28 +4,53 @@ import 'package:flutter/foundation.dart'; // compute using
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:preferences/preferences.dart'; // setting page
 import 'package:minna_kotoba_2/Chapter.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart'; // floating action button
+import 'package:flutter/rendering.dart'; // ScrollDirection.forward using
+import 'package:dynamic_theme/dynamic_theme.dart';
 
 enum ConfirmAction { CANCCEL, ACCEPT }
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
-  runApp(
-    MaterialApp(
-      title: "Minna Kotoba 2",
-      home: MyApp(),
-    )
-  );
+  runApp(MaterialApp(
+    title: "Minna Kotoba 2",
+    home: MyApp(),
+  ));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new DynamicTheme(
+        defaultBrightness: Brightness.light,
+        data: (brightness) =>
+            new ThemeData(brightness: brightness, accentColor: Colors.green),
+        themedWidgetBuilder: (context, theme) {
+          return new MaterialApp(
+            title: 'Minna Kotoba 2',
+            theme: theme,
+            home: new MyHomePage(title: 'Preferences Demo'),
+          );
+        });
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key, this.title}) : super(key: key);
+
+  final String title;
+
   @override
   _MyAppState createState() => new _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyHomePage> {
   int _drawerIndex = 0;
   bool isShowDrawerMenu = true;
   bool _isShowFavMenu = false;
+  bool _dialVisible = true;
+  bool _isShuffle = false;
+  bool _isRemembering = false;
   List<Chapter> _chapters;
   List<ListItem> _allWords;
   List<ListItem> _allWordsBackup = [];
@@ -36,6 +61,16 @@ class _MyAppState extends State<MyApp> {
   // setting variables
   final List<String> _listJapanese = ['Kana', 'Kanji', 'Romaji'];
   final List<String> _listMeaning = ['Myanmar', 'English'];
+
+  _setDialVisible(bool value) {
+    setState(() {
+      if (isShowDrawerMenu) {
+        _dialVisible = value;
+      } else {
+        _dialVisible = false;
+      }
+    });
+  }
 
   Future _speak(text) async {
     // ～ remove in speaking
@@ -88,9 +123,9 @@ class _MyAppState extends State<MyApp> {
     List<Widget> drawer = [
       DrawerHeader(
         child: Text('Drawer Header'),
-        decoration: BoxDecoration(
-          color: Colors.blue,
-        ),
+//        decoration: BoxDecoration(
+//          color: Theme.of(context).primaryColor
+//        ),
       ),
     ];
 
@@ -105,6 +140,7 @@ class _MyAppState extends State<MyApp> {
             _drawerIndex = i;
           });
           print('drawer index $i $_drawerIndex');
+          PrefService.setInt("drawer_index", _drawerIndex);
           Navigator.of(context).pop(); // dismiss the navigator
           _scrollController.animateTo(0.0,
               duration: Duration(milliseconds: 500), curve: Curves.easeOut);
@@ -159,11 +195,16 @@ class _MyAppState extends State<MyApp> {
             trailing: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.redAccent),
                 Text(chapter.words[index].no),
               ],
             ),
-            title: japaneseText,
+            title: AnimatedOpacity(
+              opacity: _isRemembering ? 0.0 : 1.0,
+              duration: Duration(milliseconds: 500),
+              child: japaneseText,
+            ),
             subtitle: meaningText,
             onTap: () {
               _speak(chapter.words[index].hiragana);
@@ -214,8 +255,7 @@ class _MyAppState extends State<MyApp> {
                   hintText: "watashi",
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(15.0)))
-              ),
+                      borderRadius: BorderRadius.all(Radius.circular(15.0)))),
             ),
           ),
           Expanded(
@@ -225,10 +265,27 @@ class _MyAppState extends State<MyApp> {
                 itemBuilder: (context, index) {
                   if (isFavPage) {
                     return ListTile(
-                      title: Text(favWords[index].hiragana),
-                      subtitle: Text(
-                        favWords[index].myanmar,
-                        style: TextStyle(fontFamily: 'Masterpiece'),
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                              '${favWords[index].hiragana} ${favWords[index].romaji}'),
+                          Text(favWords[index].kanji),
+                        ],
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            favWords[index].myanmar,
+                            style: TextStyle(fontFamily: 'Masterpiece'),
+                          ),
+                          Text(
+                            favWords[index].english,
+                          )
+                        ],
                       ),
                       trailing: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -261,16 +318,32 @@ class _MyAppState extends State<MyApp> {
                       bool isFav = _favoriteList.contains(vocal.no);
 
                       return ListTile(
-                        title: Text(vocal.hiragana),
-                        subtitle: Text(
-                          vocal.myanmar,
-                          style: TextStyle(fontFamily: 'Masterpiece'),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text('${vocal.hiragana} ${vocal.romaji}'),
+                            Text(vocal.kanji),
+                          ],
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              vocal.myanmar,
+                              style: TextStyle(fontFamily: 'Masterpiece'),
+                            ),
+                            Text(
+                              vocal.english,
+                            )
+                          ],
                         ),
                         trailing: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            Icon(
-                                isFav ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                            Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                                color: Colors.redAccent),
                             Text(vocal.no),
                           ],
                         ),
@@ -290,7 +363,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  PreferencePage _preferencePage() {
+  PreferencePage _preferencePage(BuildContext context) {
     return PreferencePage([
       PreferenceTitle("List"),
       DropdownPreference(
@@ -304,7 +377,25 @@ class _MyAppState extends State<MyApp> {
         'list_meaning',
         defaultVal: _listMeaning[0],
         values: _listMeaning,
-      )
+      ),
+      PreferenceTitle('Personalization'),
+      RadioPreference(
+        'Day Mode',
+        'light',
+        'ui_theme',
+        isDefault: true,
+        onSelect: () {
+          DynamicTheme.of(context).setBrightness(Brightness.light);
+        },
+      ),
+      RadioPreference(
+        'Night Mode',
+        'dark',
+        'ui_theme',
+        onSelect: () {
+          DynamicTheme.of(context).setBrightness(Brightness.dark);
+        },
+      ),
     ]);
   }
 
@@ -327,6 +418,16 @@ class _MyAppState extends State<MyApp> {
     }).catchError((error) {
       print('initState error $error');
     });
+
+    _scrollController = ScrollController()
+      ..addListener(() {
+        _setDialVisible(_scrollController.position.userScrollDirection ==
+            ScrollDirection.forward);
+      });
+
+    _isShuffle = PrefService.getBool("is_shuffle") ?? false;
+
+    _drawerIndex = PrefService.getInt("drawer_index") ?? 0;
 
     super.initState();
   }
@@ -369,87 +470,151 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-    return MaterialApp(
-      title: appTitle,
-      home: DefaultTabController(
-        length: 4,
-        child: Scaffold(
-          appBar: _isShowFavMenu
-              ? AppBar(
-                  title: Text(appTitle),
-                  actions: <Widget>[
-                    IconButton(
-                        icon: Icon(Icons.delete_outline, color: Colors.white),
-                        onPressed: () async {
-                          ConfirmAction action = await _clearFav();
-                          print('ConfirmAction $action');
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: _isShowFavMenu
+            ? AppBar(
+                title: Text(appTitle),
+                actions: <Widget>[
+                  IconButton(
+                      icon: Icon(Icons.delete_outline),
+                      onPressed: () async {
+                        ConfirmAction action = await _clearFav();
+                        print('ConfirmAction $action');
 
-                          if (action == ConfirmAction.ACCEPT) {
-                            print('Clearing the favorite list');
-                            setState(() {
-                              _favoriteList.clear();
-                            });
-                            PrefService.setStringList("list_favorite", []);
-                          }
+                        if (action == ConfirmAction.ACCEPT) {
+                          print('Clearing the favorite list');
+                          setState(() {
+                            _favoriteList.clear();
+                          });
+                          PrefService.setStringList("list_favorite", []);
                         }
-                    )
-                  ],
-                )
-              : AppBar(title: Text(appTitle)),
-          drawer: isShowDrawerMenu
-              ? Builder(builder: (context) {
-                  return _chapters != null
-                      ? Drawer(
-                          child: ListView(
-                              padding: EdgeInsets.zero,
-                              children: _buildDrawerList(context, _chapters)),
-                        )
-                      : Center(child: CircularProgressIndicator());
-                })
-              : null,
-          body: TabBarView(
-            children: [
-              _chapters != null
-                  ? _buildBodyList(context, _chapters[_drawerIndex])
-                  : Center(child: CircularProgressIndicator()),
-              _allWords != null
-                  ? _buildSearchBodyList(context)
-                  : Center(child: CircularProgressIndicator()),
-              _allWords != null
-                  ? _buildSearchBodyList(context, isFavPage: true)
-                  : Center(child: CircularProgressIndicator()),
-              _preferencePage(),
-            ],
-            physics: NeverScrollableScrollPhysics(),
-          ),
-          bottomNavigationBar: TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.format_list_numbered_rtl)),
-              Tab(icon: Icon(Icons.search)),
-              Tab(icon: Icon(Icons.favorite, color: Colors.redAccent)),
-              Tab(icon: Icon(Icons.settings)),
-            ],
-            onTap: (int index) {
-              print('tab index $index');
+                      })
+                ],
+              )
+            : AppBar(title: Text(appTitle)),
+        drawer: isShowDrawerMenu
+            ? Builder(builder: (context) {
+                return _chapters != null
+                    ? Drawer(
+                        child: ListView(
+                            padding: EdgeInsets.zero,
+                            children: _buildDrawerList(context, _chapters)),
+                      )
+                    : Center(child: CircularProgressIndicator());
+              })
+            : null,
+        body: TabBarView(
+          children: [
+            _chapters != null
+                ? _buildBodyList(context, _chapters[_drawerIndex])
+                : Center(child: CircularProgressIndicator()),
+            _allWords != null
+                ? _buildSearchBodyList(context)
+                : Center(child: CircularProgressIndicator()),
+            _allWords != null
+                ? _buildSearchBodyList(context, isFavPage: true)
+                : Center(child: CircularProgressIndicator()),
+            _preferencePage(context),
+          ],
+          physics: NeverScrollableScrollPhysics(),
+        ),
+        bottomNavigationBar: TabBar(
+          tabs: [
+            Tab(icon: Icon(Icons.format_list_numbered_rtl)),
+            Tab(icon: Icon(Icons.search)),
+            Tab(icon: Icon(Icons.favorite, color: Colors.redAccent)),
+            Tab(icon: Icon(Icons.settings)),
+          ],
+          onTap: (int index) {
+            print('tab index $index');
 
+            setState(() {
+              isShowDrawerMenu = false;
+              _isShowFavMenu = false;
+              _dialVisible = false;
+            });
+
+            if (index == 0) {
               setState(() {
-                isShowDrawerMenu = false;
-                _isShowFavMenu = false;
+                isShowDrawerMenu = true;
+                _dialVisible = true;
               });
+            } else if (index == 2) {
+              setState(() {
+                _isShowFavMenu = true;
+              });
+            }
+          },
+          labelColor: Colors.black,
+          isScrollable: false,
+        ),
+        floatingActionButton: SpeedDial(
+          // both default to 16
+          marginRight: 18,
+          marginBottom: 20,
+          animatedIcon: AnimatedIcons.menu_close,
+          animatedIconTheme: IconThemeData(size: 22.0),
+          // this is ignored if animatedIcon is non null
+          // child: Icon(Icons.add),
+          visible: _dialVisible,
+          // If true user is forced to close dial manually
+          // by tapping main button and overlay is not rendered.
+          closeManually: false,
+          curve: Curves.bounceIn,
+          overlayColor: Colors.black,
+          overlayOpacity: 0.5,
+          onOpen: () => print('OPENING DIAL'),
+          onClose: () => print('DIAL CLOSED'),
+          tooltip: 'Speed Dial',
+          heroTag: 'speed-dial-hero-tag',
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 8.0,
+          shape: CircleBorder(),
+          children: [
+            SpeedDialChild(
+                child: Icon(Icons.shuffle),
+//                  backgroundColor: _isShuffle ? Colors.red : Colors.white,
+//                  foregroundColor: _isShuffle ? Colors.white : Colors.black87,
+                label: 'Shuffle',
+//              labelStyle: TextTheme(fontSize: 18.0),
+                onTap: () {
+                  setState(() {
+                    _isShuffle = !_isShuffle;
+                  });
+                  print('_isShuffle $_isShuffle');
+                  PrefService.setBool("is_shuffle", _isShuffle);
 
-              if (index == 0) {
+                  if (_isShuffle) {
+                    _chapters[_drawerIndex].words.shuffle();
+                  } else {
+                    _chapters[_drawerIndex].words.sort((a, b) =>
+                        int.parse(a.no.split("/")[1])
+                            .compareTo(int.parse(b.no.split("/")[1])));
+                  }
+                }),
+            SpeedDialChild(
+              child: Icon(Icons.question_answer),
+//                backgroundColor: _isShuffle ? Colors.blue : Colors.white,
+//                foregroundColor: _isShuffle ? Colors.white : Colors.black87,
+              label: 'Remembering',
+//            labelStyle: TextTheme(fontSize: 18.0),
+              onTap: () {
                 setState(() {
-                  isShowDrawerMenu = true;
+                  _isRemembering = !_isRemembering;
                 });
-              } else if (index == 2) {
-                setState(() {
-                  _isShowFavMenu = true;
-                });
-              }
-            },
-            labelColor: Colors.black,
-            isScrollable: false,
-          ),
+              },
+            ),
+            SpeedDialChild(
+              child: Icon(Icons.keyboard_voice),
+//                backgroundColor: Colors.green,
+              label: 'Third',
+//            labelStyle: TextTheme(fontSize: 18.0),
+              onTap: () => print('THIRD CHILD'),
+            ),
+          ],
         ),
       ),
     );
