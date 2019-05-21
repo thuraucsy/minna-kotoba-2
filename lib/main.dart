@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // compute using
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:preferences/preferences.dart'; // setting page
-import 'package:minna_kotoba_2/Chapter.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart'; // floating action button
-import 'package:flutter/rendering.dart'; // ScrollDirection.forward using
 import 'package:dynamic_theme/dynamic_theme.dart';
+import 'package:minna_kotoba_2/Chapter.dart';
 
-enum ConfirmAction { CANCCEL, ACCEPT }
+enum ConfirmAction { CANCEL, ACCEPT }
+final String appBarTitle = "Minna Kotoba 2";
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
   runApp(MaterialApp(
-    title: "Minna Kotoba 2",
+    title: appBarTitle,
     home: MyApp(),
   ));
 }
@@ -23,13 +23,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return new DynamicTheme(
         defaultBrightness: Brightness.light,
-        data: (brightness) =>
-            new ThemeData(brightness: brightness, accentColor: Colors.green),
+        data: (brightness) => new ThemeData(
+            primaryColor: Color.fromRGBO(58, 66, 86, 1.0),
+//                backgroundColor: Color.fromRGBO(231, 231, 214, 1.0),
+            brightness: brightness,
+            accentColor: Colors.green),
         themedWidgetBuilder: (context, theme) {
           return new MaterialApp(
-            title: 'Minna Kotoba 2',
+            title: appBarTitle,
             theme: theme,
-            home: new MyHomePage(title: 'Preferences Demo'),
+            home: new MyHomePage(title: 'Minna Kotoba 2'),
           );
         });
   }
@@ -46,36 +49,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyAppState extends State<MyHomePage> {
   int _drawerIndex = 0;
-  bool isShowDrawerMenu = true;
-  bool _isShowFavMenu = false;
-  bool _dialVisible = true;
-  bool _isShuffle = false;
-  bool _isRemembering = false;
+  bool isShowDrawerMenu = true, _isShowFavMenu = false, _dialVisible = true, _isShuffle = false;
+  List<String> _isShowKotoba = [];
   List<Chapter> _chapters;
-  List<ListItem> _allWords;
-  List<ListItem> _allWordsBackup = [];
+  List<ListItem> _allWords, _allWordsBackup = [];
   ScrollController _scrollController = new ScrollController();
   TextEditingController _searchController = TextEditingController(text: "");
   Set _favoriteList = Set<String>();
   FlutterTts _flutterTts;
-  // setting variables
-  final List<String> _listJapanese = ['Kana', 'Kanji', 'Romaji'];
-  final List<String> _listMeaning = ['Myanmar', 'English'];
+  final List<String> _listJapanese = ['Kana', 'Kanji', 'Romaji'], _listMeaning = ['Myanmar', 'English'], _listMemorizing = ['Japanese', 'Meaning'];
 
-  _setDialVisible(bool value) {
-    setState(() {
-      if (isShowDrawerMenu) {
-        _dialVisible = value;
-      } else {
-        _dialVisible = false;
-      }
-    });
-  }
-
-  Future _speak(text) async {
-    // ～ remove in speaking
-    text = text.replaceAll(new RegExp(r'～'), '　');
-    var result = await _flutterTts.speak(text);
+  void _toggleTheShuffle() {
+    if (_isShuffle) {
+      _chapters[_drawerIndex].words.shuffle();
+    } else {
+      _chapters[_drawerIndex].words.sort((a, b) =>
+          int.parse(a.no.split("/")[1])
+              .compareTo(int.parse(b.no.split("/")[1])));
+    }
   }
 
   void _toggleFav(no, isFav) {
@@ -86,7 +77,6 @@ class _MyAppState extends State<MyHomePage> {
         _favoriteList.add(no);
       }
     });
-    print('long press $no $isFav');
     PrefService.setStringList("list_favorite", _favoriteList.toList());
   }
 
@@ -119,6 +109,18 @@ class _MyAppState extends State<MyHomePage> {
     }
   }
 
+  Future _speak(text) async {
+    text = text.replaceAll(new RegExp(r'～'), '　'); // ～ remove in speaking
+    var result = await _flutterTts.speak(text);
+  }
+
+  Widget _buildCard(ListTile listTile) {
+    return Card(
+//        elevation: 1.5,
+        margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+        child: Container(child: listTile));
+  }
+
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> _chapters) {
     List<Widget> drawer = [
       DrawerHeader(
@@ -132,20 +134,24 @@ class _MyAppState extends State<MyHomePage> {
     List<Widget> chapterTile = [];
     for (int i = 0; i < _chapters.length; i++) {
       Chapter chapter = _chapters[i];
-      chapterTile.add(new ListTile(
-        title: Text(chapter.title),
-        trailing: Icon(Icons.arrow_forward),
-        onTap: () {
-          setState(() {
-            _drawerIndex = i;
-          });
-          print('drawer index $i $_drawerIndex');
-          PrefService.setInt("drawer_index", _drawerIndex);
-          Navigator.of(context).pop(); // dismiss the navigator
-          _scrollController.animateTo(0.0,
-              duration: Duration(milliseconds: 500), curve: Curves.easeOut);
-        },
-      ));
+      chapterTile.add(
+//          _buildCard(
+          ListTile(
+            title: Text(chapter.title),
+            onTap: () {
+              setState(() {
+                _drawerIndex = i;
+              });
+              print('drawer index $i $_drawerIndex');
+              PrefService.setInt("drawer_index", _drawerIndex);
+              Navigator.of(context).pop(); // dismiss the navigator
+              _scrollController.animateTo(0.0,
+                  duration: Duration(milliseconds: 500), curve: Curves.easeOut);
+              _toggleTheShuffle();
+            },
+          )
+//          )
+          );
     }
 
     drawer.addAll(chapterTile);
@@ -153,67 +159,83 @@ class _MyAppState extends State<MyHomePage> {
     return drawer;
   }
 
-  ListView _buildBodyList(BuildContext context, Chapter chapter) {
-    print(
-        'pref ${PrefService.getString("list_japanese")} ${PrefService.getString("list_meaning")} ${PrefService.getStringList("list_favorite")}');
+  Widget _buildBodyList(BuildContext context) {
 
-    String selectedJapanese = _listJapanese[0];
-    String selectedMeaning = _listMeaning[0];
+    String selectedJapanese = PrefService.getString("list_japanese") ?? _listJapanese[0];
+    String selectedMeaning = PrefService.getString("list_meaning") ?? _listMeaning[0];
+    String selectedMemorizing = PrefService.getString("list_memorizing") ?? _listMemorizing[0];
 
-    if (PrefService.getString("list_japanese") != null) {
-      selectedJapanese = PrefService.getString("list_japanese");
-    }
-    if (PrefService.getString("list_meaning") != null) {
-      selectedMeaning = PrefService.getString("list_meaning");
-    }
-
-    if (PrefService.getStringList("list_favorite") != null) {
-      _favoriteList = PrefService.getStringList("list_favorite").toSet();
-    }
-
-    return ListView.builder(
+    return Container(
+      child: ListView.builder(
+        scrollDirection: Axis.vertical,
         controller: _scrollController,
-        itemCount: chapter.words.length,
-        itemBuilder: (context, index) {
-          Text japaneseText = Text(chapter.words[index].hiragana);
+        shrinkWrap: true,
+        itemCount: _chapters[_drawerIndex].words.length,
+        itemBuilder: (BuildContext context, int index) {
+          Text japaneseText =
+              Text(_chapters[_drawerIndex].words[index].hiragana);
           if (selectedJapanese == _listJapanese[1]) {
-            japaneseText = Text(chapter.words[index].kanji);
+            japaneseText = Text(_chapters[_drawerIndex].words[index].kanji);
           } else if (selectedJapanese == _listJapanese[2]) {
-            japaneseText = Text(chapter.words[index].romaji);
+            japaneseText = Text(_chapters[_drawerIndex].words[index].romaji);
           }
 
-          Text meaningText = Text(chapter.words[index].myanmar,
+          Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
               style: TextStyle(fontFamily: 'Masterpiece'));
           if (selectedMeaning == _listMeaning[1]) {
-            meaningText = Text(chapter.words[index].english);
+            meaningText = Text(_chapters[_drawerIndex].words[index].english);
           }
 
           // favorite condition
-          bool isFav = _favoriteList.contains(chapter.words[index].no);
+          bool isFav =
+              _favoriteList.contains(_chapters[_drawerIndex].words[index].no);
 
-          return ListTile(
-            trailing: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(isFav ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.redAccent),
-                Text(chapter.words[index].no),
-              ],
+          return _buildCard(
+            ListTile(
+              trailing: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.redAccent),
+                  Text(_chapters[_drawerIndex].words[index].no),
+                ],
+              ),
+              title: AnimatedOpacity(
+                opacity: (selectedMemorizing != _listMemorizing[0] ||
+                        (_isShowKotoba.length == 0 ||
+                            (_isShowKotoba.contains(_chapters[_drawerIndex].words[index].no))))
+                    ? 1.0
+                    : 0.0,
+                duration: Duration(milliseconds: 500),
+                child: japaneseText,
+              ),
+              subtitle: AnimatedOpacity(
+                opacity: (selectedMemorizing != _listMemorizing[1] ||
+                        (_isShowKotoba.length == 0 ||
+                            (_isShowKotoba.contains(_chapters[_drawerIndex].words[index].no))))
+                    ? 1.0
+                    : 0.0,
+                duration: Duration(milliseconds: 500),
+                child: meaningText,
+              ),
+              onTap: () {
+                _speak(_chapters[_drawerIndex].words[index].kanji);
+                setState(() {
+                  if (_isShowKotoba.length > 0) {
+                    _isShowKotoba[index] =
+                        _chapters[_drawerIndex].words[index].no;
+                    print('_isShowKotoba[index] ${_isShowKotoba[index]}');
+                  }
+                });
+              },
+              onLongPress: () {
+                _toggleFav(_chapters[_drawerIndex].words[index].no, isFav);
+              },
             ),
-            title: AnimatedOpacity(
-              opacity: _isRemembering ? 0.0 : 1.0,
-              duration: Duration(milliseconds: 500),
-              child: japaneseText,
-            ),
-            subtitle: meaningText,
-            onTap: () {
-              _speak(chapter.words[index].hiragana);
-            },
-            onLongPress: () {
-              _toggleFav(chapter.words[index].no, isFav);
-            },
           );
-        });
+        },
+      ),
+    );
   }
 
   Container _buildSearchBodyList(BuildContext context,
@@ -238,13 +260,52 @@ class _MyAppState extends State<MyHomePage> {
       }
     }
 
+    Widget makeList(Vocal vocal, bool isFav) {
+      return _buildCard(ListTile(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('${vocal.hiragana} ${vocal.romaji}'),
+            Text(vocal.kanji),
+          ],
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              vocal.myanmar,
+              style: TextStyle(fontFamily: 'Masterpiece'),
+            ),
+            Text(
+              vocal.english,
+            )
+          ],
+        ),
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                color: Colors.redAccent),
+            Text(vocal.no),
+          ],
+        ),
+        onTap: () {
+          _speak(vocal.hiragana);
+        },
+        onLongPress: () {
+          _toggleFav(vocal.no, isFav);
+        },
+      ));
+    }
+
     return Container(
       child: Column(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              style: TextStyle(fontFamily: 'Masterpiece'),
+//              style: TextStyle(fontFamily: 'Masterpiece'),
               controller: _searchController,
               onChanged: (value) {
                 print('search onChanged $value');
@@ -255,7 +316,7 @@ class _MyAppState extends State<MyHomePage> {
                   hintText: "watashi",
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(15.0)))),
+                      borderRadius: BorderRadius.all(Radius.circular(6.0)))),
             ),
           ),
           Expanded(
@@ -264,44 +325,7 @@ class _MyAppState extends State<MyHomePage> {
                 itemCount: isFavPage ? favWords.length : _allWords.length,
                 itemBuilder: (context, index) {
                   if (isFavPage) {
-                    return ListTile(
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                              '${favWords[index].hiragana} ${favWords[index].romaji}'),
-                          Text(favWords[index].kanji),
-                        ],
-                      ),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            favWords[index].myanmar,
-                            style: TextStyle(fontFamily: 'Masterpiece'),
-                          ),
-                          Text(
-                            favWords[index].english,
-                          )
-                        ],
-                      ),
-                      trailing: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(Icons.favorite, color: Colors.redAccent),
-                          Text(favWords[index].no),
-                        ],
-                      ),
-//                      trailing: Text(favWords[index].no),
-                      onTap: () {
-                        _speak(favWords[index].hiragana);
-                      },
-                      onLongPress: () {
-                        _toggleFav(favWords[index].no, true);
-                      },
-                    );
+                    return makeList(favWords[index], true);
                   } else {
                     if (_allWords[index] is ChapterTitle) {
                       ChapterTitle chapterTitle =
@@ -317,43 +341,7 @@ class _MyAppState extends State<MyHomePage> {
                       // favorite condition
                       bool isFav = _favoriteList.contains(vocal.no);
 
-                      return ListTile(
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('${vocal.hiragana} ${vocal.romaji}'),
-                            Text(vocal.kanji),
-                          ],
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              vocal.myanmar,
-                              style: TextStyle(fontFamily: 'Masterpiece'),
-                            ),
-                            Text(
-                              vocal.english,
-                            )
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Icon(isFav ? Icons.favorite : Icons.favorite_border,
-                                color: Colors.redAccent),
-                            Text(vocal.no),
-                          ],
-                        ),
-                        onTap: () {
-                          _speak(vocal.hiragana);
-                        },
-                        onLongPress: () {
-                          _toggleFav(vocal.no, isFav);
-                        },
-                      );
+                      return makeList(vocal, isFav);
                     }
                   }
                 }),
@@ -377,6 +365,12 @@ class _MyAppState extends State<MyHomePage> {
         'list_meaning',
         defaultVal: _listMeaning[0],
         values: _listMeaning,
+      ),
+      DropdownPreference(
+        'Memorizing',
+        'list_memorizing',
+        defaultVal: _listMemorizing[0],
+        values: _listMemorizing,
       ),
       PreferenceTitle('Personalization'),
       RadioPreference(
@@ -407,6 +401,9 @@ class _MyAppState extends State<MyHomePage> {
     fetchPhotos(context).then((data) {
       setState(() {
         _chapters = data;
+        if (PrefService.getStringList("list_favorite") != null) {
+          _favoriteList = PrefService.getStringList("list_favorite").toSet();
+        }
       });
 
       for (int i = 0; i < _chapters.length; i++) {
@@ -419,13 +416,6 @@ class _MyAppState extends State<MyHomePage> {
       print('initState error $error');
     });
 
-    _scrollController = ScrollController()
-      ..addListener(() {
-        _setDialVisible(_scrollController.position.userScrollDirection ==
-            ScrollDirection.forward);
-      });
-
-    _isShuffle = PrefService.getBool("is_shuffle") ?? false;
 
     _drawerIndex = PrefService.getInt("drawer_index") ?? 0;
 
@@ -448,14 +438,14 @@ class _MyAppState extends State<MyHomePage> {
         builder: (BuildContext context) {
           // return object of type Dialog
           return AlertDialog(
-            title: new Text("Reset favorite?"),
+            title: new Text("Empty favorite?"),
             content: new Text("This will clear the favorite list."),
             actions: <Widget>[
               // usually buttons at the bottom of the dialog
               FlatButton(
                 child: new Text("Close"),
                 onPressed: () {
-                  Navigator.of(context).pop(ConfirmAction.CANCCEL);
+                  Navigator.of(context).pop(ConfirmAction.CANCEL);
                 },
               ),
               FlatButton(
@@ -473,27 +463,34 @@ class _MyAppState extends State<MyHomePage> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        appBar: _isShowFavMenu
-            ? AppBar(
-                title: Text(appTitle),
-                actions: <Widget>[
-                  IconButton(
-                      icon: Icon(Icons.delete_outline),
-                      onPressed: () async {
-                        ConfirmAction action = await _clearFav();
-                        print('ConfirmAction $action');
+        appBar: CustomAppBar(
+          appBar: _isShowFavMenu
+              ? AppBar(
+                  title: Text(appTitle),
+                  actions: <Widget>[
+                    IconButton(
+                        icon: Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          ConfirmAction action = await _clearFav();
+                          print('ConfirmAction $action');
 
-                        if (action == ConfirmAction.ACCEPT) {
-                          print('Clearing the favorite list');
-                          setState(() {
-                            _favoriteList.clear();
-                          });
-                          PrefService.setStringList("list_favorite", []);
-                        }
-                      })
-                ],
-              )
-            : AppBar(title: Text(appTitle)),
+                          if (action == ConfirmAction.ACCEPT) {
+                            print('Clearing the favorite list');
+                            setState(() {
+                              _favoriteList.clear();
+                            });
+                            PrefService.setStringList("list_favorite", []);
+                          }
+                        })
+                  ],
+                )
+              : AppBar(title: Text(appTitle)),
+          onTap: () {
+            print('app bar tap');
+            _scrollController.animateTo(0.0,
+                duration: Duration(milliseconds: 500), curve: Curves.easeOut);
+          },
+        ),
         drawer: isShowDrawerMenu
             ? Builder(builder: (context) {
                 return _chapters != null
@@ -508,7 +505,7 @@ class _MyAppState extends State<MyHomePage> {
         body: TabBarView(
           children: [
             _chapters != null
-                ? _buildBodyList(context, _chapters[_drawerIndex])
+                ? _buildBodyList(context)
                 : Center(child: CircularProgressIndicator()),
             _allWords != null
                 ? _buildSearchBodyList(context)
@@ -576,43 +573,40 @@ class _MyAppState extends State<MyHomePage> {
           children: [
             SpeedDialChild(
                 child: Icon(Icons.shuffle),
-//                  backgroundColor: _isShuffle ? Colors.red : Colors.white,
-//                  foregroundColor: _isShuffle ? Colors.white : Colors.black87,
-                label: 'Shuffle',
-//              labelStyle: TextTheme(fontSize: 18.0),
+                backgroundColor: _isShuffle ? Colors.deepOrangeAccent : Colors.white,
+                foregroundColor: _isShuffle ? Colors.white : Colors.black,
+                label: _isShuffle ? 'Shuffling' : 'Shuffle',
+                labelStyle: TextStyle(color: Colors.black),
                 onTap: () {
                   setState(() {
                     _isShuffle = !_isShuffle;
                   });
                   print('_isShuffle $_isShuffle');
-                  PrefService.setBool("is_shuffle", _isShuffle);
+                  _toggleTheShuffle();
 
-                  if (_isShuffle) {
-                    _chapters[_drawerIndex].words.shuffle();
-                  } else {
-                    _chapters[_drawerIndex].words.sort((a, b) =>
-                        int.parse(a.no.split("/")[1])
-                            .compareTo(int.parse(b.no.split("/")[1])));
-                  }
                 }),
             SpeedDialChild(
               child: Icon(Icons.question_answer),
-//                backgroundColor: _isShuffle ? Colors.blue : Colors.white,
-//                foregroundColor: _isShuffle ? Colors.white : Colors.black87,
-              label: 'Remembering',
-//            labelStyle: TextTheme(fontSize: 18.0),
+              backgroundColor: _isShowKotoba.length > 0 ? Colors.green : Colors.white,
+              foregroundColor: _isShowKotoba.length > 0 ? Colors.white : Colors.black,
+              label: _isShowKotoba.length > 0 ? 'Memorizing' : 'Memorize',
+              labelStyle: TextStyle(color: Colors.black),
               onTap: () {
+                print('Memorizing');
                 setState(() {
-                  _isRemembering = !_isRemembering;
+                  if (_isShowKotoba.length == 0) {
+                    print('on');
+                    for (int i = 0;
+                        i < _chapters[_drawerIndex].words.length;
+                        i++) {
+                      _isShowKotoba.add("");
+                    }
+                  } else {
+                    print('off ${_isShowKotoba.length}');
+                    _isShowKotoba = [];
+                  }
                 });
               },
-            ),
-            SpeedDialChild(
-              child: Icon(Icons.keyboard_voice),
-//                backgroundColor: Colors.green,
-              label: 'Third',
-//            labelStyle: TextTheme(fontSize: 18.0),
-              onTap: () => print('THIRD CHILD'),
             ),
           ],
         ),
@@ -630,4 +624,20 @@ Future<List<Chapter>> fetchPhotos(context) async {
 List<Chapter> parseChapters(String responseBody) {
   final parsed = json.decode(responseBody).cast<Map<String, dynamic>>();
   return parsed.map<Chapter>((json) => Chapter.fromJson(json)).toList();
+}
+
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final VoidCallback onTap;
+  final AppBar appBar;
+
+  const CustomAppBar({Key key, this.onTap, this.appBar}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(onTap: onTap, child: appBar);
+  }
+
+  // TODO: implement preferredSize
+  @override
+  Size get preferredSize => new Size.fromHeight(kToolbarHeight);
 }
