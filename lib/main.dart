@@ -320,13 +320,17 @@ class _MyAppState extends State<MyHomePage> {
           DynamicTheme.of(context).setBrightness(Brightness.dark);
         },
       ),
+      PreferenceTitle('Myanmar Font'),
+      SwitchPreference('Zawgyi', 'switch_zawgyi', onChange: () {
+        _chapters.clear();
+        _allWords.clear();
+        _allVocals.clear();
+        initializeVar();
+      },)
     ]);
   }
 
-  @override
-  void initState() {
-    print('initState');
-
+  void initializeVar() {
     fetchPhotos(context).then((data) {
       setState(() {
         _chapters = data;
@@ -339,10 +343,16 @@ class _MyAppState extends State<MyHomePage> {
       }
       print('_allWords ${_allWords.length}');
     }).catchError((error) {
-      print('initState error $error');
+      print('fetchPhotos error $error');
     });
 
     _drawerIndex = PrefService.getInt("drawer_index") ?? 0;
+  }
+
+  @override
+  void initState() {
+    print('initState');
+    initializeVar();
 
     super.initState();
   }
@@ -554,8 +564,15 @@ class _MyAppState extends State<MyHomePage> {
 }
 
 Future<List<Chapter>> fetchPhotos(context) async {
+
+  bool switchZawgyi = PrefService.getBool("switch_zawgyi");
+  String loadString = 'data.json';
+  if (switchZawgyi) {
+    loadString = 'dataZawgyi.json';
+  }
+
   final response =
-      await DefaultAssetBundle.of(context).loadString('assets/data.json');
+      await DefaultAssetBundle.of(context).loadString('assets/$loadString');
   return compute(parseChapters, response);
 }
 
@@ -618,7 +635,7 @@ Future speak(text, context) async {
 
 Widget buildCard(ListTile listTile) {
   return Card(
-//        elevation: 1.5,
+      elevation: 2.0,
       margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
       child: Container(child: listTile));
 }
