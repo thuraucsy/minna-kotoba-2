@@ -727,7 +727,7 @@ class VocalSearch extends SearchDelegate<Vocal> {
 
       searchList.forEach((item) {
         if (item is Vocal &&
-            (item.romaji.startsWith(query) ||
+            (item.romaji.toLowerCase().startsWith(query) ||
                 item.hiragana.contains(query) ||
                 item.kanji.contains(query) ||
                 item.english.contains(query) ||
