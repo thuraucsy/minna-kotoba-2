@@ -173,9 +173,14 @@ class _MyAppState extends State<MyHomePage> {
                 speak(_chapters[_drawerIndex].words[index].kanji, context);
                 setState(() {
                   if (_isShowKotoba.length > 0) {
-                    _isShowKotoba[index] =
-                        _chapters[_drawerIndex].words[index].no;
-                    print('_isShowKotoba[index] ${_isShowKotoba[index]}');
+                    int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
+                    if (removeInd > -1) {
+                      _isShowKotoba.removeAt(removeInd);
+                      print('_isShowKotoba removeInd $removeInd');
+                    } else {
+                      _isShowKotoba.add(_chapters[_drawerIndex].words[index].no);
+                      print('_isShowKotoba add ${_chapters[_drawerIndex].words[index].no}');
+                    }
                   }
                 });
               },
@@ -533,11 +538,7 @@ class _MyAppState extends State<MyHomePage> {
                 setState(() {
                   if (_isShowKotoba.length == 0) {
                     print('on');
-                    for (int i = 0;
-                        i < _chapters[_drawerIndex].words.length;
-                        i++) {
-                      _isShowKotoba.add("");
-                    }
+                    _isShowKotoba.add("");
                   } else {
                     print('off ${_isShowKotoba.length}');
                     _isShowKotoba = [];
