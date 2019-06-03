@@ -131,6 +131,9 @@ class _MyAppState extends State<MyHomePage> {
 
           Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
               style: TextStyle(fontFamily: 'Masterpiece'));
+          if (isZawgyi()) {
+            meaningText = Text(_chapters[_drawerIndex].words[index].myanmar);
+          }
           if (selectedMeaning == listMeaning[1]) {
             meaningText = Text(_chapters[_drawerIndex].words[index].english);
           }
@@ -212,6 +215,12 @@ class _MyAppState extends State<MyHomePage> {
     }
 
     Widget makeList(Vocal vocal, bool isFav) {
+
+      Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
+      if (isZawgyi()) {
+        myanmarText = Text(vocal.myanmar);
+      }
+
       return buildCard(ListTile(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,10 +233,7 @@ class _MyAppState extends State<MyHomePage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              vocal.myanmar,
-              style: TextStyle(fontFamily: 'Masterpiece'),
-            ),
+            myanmarText,
             Text(
               vocal.english,
             )
@@ -563,11 +569,14 @@ class _MyAppState extends State<MyHomePage> {
   }
 }
 
+bool isZawgyi() {
+  return PrefService.getBool("switch_zawgyi") ?? false;
+}
+
 Future<List<Chapter>> fetchPhotos(context) async {
 
-  bool switchZawgyi = PrefService.getBool("switch_zawgyi");
   String loadString = 'data.json';
-  if (switchZawgyi) {
+  if (isZawgyi()) {
     loadString = 'dataZawgyi.json';
   }
 
@@ -644,6 +653,11 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
 
   bool isFav =  Provider.of<AppModel>(context).isFav(vocal.no);
 
+  Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
+  if (isZawgyi()) {
+    myanmarText = Text(vocal.myanmar);
+  }
+
   return buildCard(ListTile(
     title: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,10 +670,7 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
     subtitle: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          vocal.myanmar,
-          style: TextStyle(fontFamily: 'Masterpiece'),
-        ),
+        myanmarText,
         Text(
           vocal.english,
         )
