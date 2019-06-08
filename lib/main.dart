@@ -75,10 +75,16 @@ class _MyAppState extends State<MyHomePage> {
   }
 
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> _chapters) {
+    bool isDarkTheme = (PrefService.getString('ui_theme') != null && PrefService.getString('ui_theme') == "light") ? false : true;
+
     List<Widget> drawer = [
       DrawerHeader(
-        child: Text('Drawer Header'),
-        decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+        decoration: BoxDecoration(
+            image: DecorationImage(
+                image: isDarkTheme ? AssetImage('assets/logo_dark.png') : AssetImage('assets/logo.png'),
+                fit: BoxFit.cover,
+            ),
+        )
       ),
     ];
 
@@ -130,10 +136,8 @@ class _MyAppState extends State<MyHomePage> {
           }
 
           Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
-              style: TextStyle(fontFamily: 'Masterpiece'));
-          if (isZawgyi()) {
-            meaningText = Text(_chapters[_drawerIndex].words[index].myanmar);
-          }
+              style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
+
           if (selectedMeaning == listMeaning[1]) {
             meaningText = Text(_chapters[_drawerIndex].words[index].english);
           }
@@ -216,10 +220,7 @@ class _MyAppState extends State<MyHomePage> {
 
     Widget makeList(Vocal vocal, bool isFav) {
 
-      Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
-      if (isZawgyi()) {
-        myanmarText = Text(vocal.myanmar);
-      }
+      Text myanmarText = Text(vocal.myanmar, style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
 
       return buildCard(ListTile(
         title: Column(
@@ -575,10 +576,7 @@ bool isZawgyi() {
 
 Future<List<Chapter>> fetchPhotos(context) async {
 
-  String loadString = 'data.json';
-  if (isZawgyi()) {
-    loadString = 'dataZawgyi.json';
-  }
+  String loadString = isZawgyi() ? 'dataZawgyi.json' : 'data.json';
 
   final response =
       await DefaultAssetBundle.of(context).loadString('assets/$loadString');
@@ -653,10 +651,7 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
 
   bool isFav =  Provider.of<AppModel>(context).isFav(vocal.no);
 
-  Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
-  if (isZawgyi()) {
-    myanmarText = Text(vocal.myanmar);
-  }
+  Text myanmarText = Text(vocal.myanmar, style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
 
   return buildCard(ListTile(
     title: Column(
