@@ -1,19 +1,15 @@
 import 'dart:convert'; // json using
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // compute using
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:preferences/preferences.dart'; // setting page
 import 'package:flutter_speed_dial/flutter_speed_dial.dart'; // floating action button
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:minna_kotoba_2/Chapter.dart';
 import 'package:minna_kotoba_2/AppModel.dart';
-
-enum ConfirmAction { CANCEL, ACCEPT }
-final List<String> listJapanese = ['Kana', 'Kanji', 'Romaji'],
-    listMeaning = ['Myanmar', 'English'],
-    listMemorizing = ['Japanese', 'Meaning'];
-final FlutterTts flutterTts = FlutterTts();
+import 'package:minna_kotoba_2/FlashCard.dart';
+import 'package:minna_kotoba_2/Speak.dart';
+import 'package:minna_kotoba_2/GlobalVar.dart';
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
@@ -28,15 +24,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return new DynamicTheme(
         defaultBrightness: Brightness.light,
-        data: (brightness) => new ThemeData(
+        data: (brightness) => ThemeData(
               primarySwatch: Colors.amber,
               brightness: brightness,
             ),
         themedWidgetBuilder: (context, theme) {
           return new MaterialApp(
-            title: "Minna Kotoba 2",
+            title: appTitle,
             theme: theme,
-            home: new MyHomePage(title: 'Minna Kotoba 2'),
+            home: new MyHomePage(title: appTitle),
           );
         });
   }
@@ -63,7 +59,7 @@ class _MyAppState extends State<MyHomePage> {
   List<ListItem> _allWords = [];
   List<Vocal> _allVocals = [];
   ScrollController _scrollController = new ScrollController();
-  TextEditingController _searchController = TextEditingController(text: "");
+  Speak speak = Speak();
 
   void _toggleTheShuffle() {
     if (_isShuffle) {
@@ -75,7 +71,7 @@ class _MyAppState extends State<MyHomePage> {
   }
 
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> _chapters) {
-    bool isDarkTheme = (PrefService.getString('ui_theme') != null && PrefService.getString('ui_theme') == "light") ? false : true;
+    bool isDarkTheme = (PrefService.getString('ui_theme') == null || PrefService.getString('ui_theme') == "light") ? false : true;
 
     List<Widget> drawer = [
       DrawerHeader(
@@ -177,7 +173,7 @@ class _MyAppState extends State<MyHomePage> {
                 child: meaningText,
               ),
               onTap: () {
-                speak(_chapters[_drawerIndex].words[index].kanji, context);
+                speak.tts(_chapters[_drawerIndex].words[index].kanji, context);
                 setState(() {
                   if (_isShowKotoba.length > 0) {
                     int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
@@ -249,7 +245,7 @@ class _MyAppState extends State<MyHomePage> {
           ],
         ),
         onTap: () {
-          speak(vocal.hiragana, context);
+          speak.tts(vocal.hiragana, context);
         },
         onLongPress: () {
           Provider.of<AppModel>(context).toggle(vocal.no, isFav);
@@ -417,6 +413,24 @@ class _MyAppState extends State<MyHomePage> {
                     );
                   },
                 ),
+              ),
+              Visibility(
+                visible: isShowDrawerMenu,
+                child: IconButton(
+                    icon: Icon(Icons.crop_portrait),
+                    onPressed: () {
+                      print('flash card click');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => FlashCard(
+                            _chapters[_drawerIndex].words,
+                            PrefService.getString("list_japanese") ?? listJapanese[0],
+                            PrefService.getString("list_meaning") ?? listMeaning[0],
+                          PrefService.getString("list_memorizing") ?? listMemorizing[0],
+                        )),
+                      );
+                    }
+                 ),
               ),
               Visibility(
                 visible: _isShowFavMenu,
@@ -604,42 +618,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => new Size.fromHeight(kToolbarHeight);
 }
 
-Future speak(text, context) async {
-  bool switchTts = PrefService.getBool("switch_tts");
-  if (switchTts == null || switchTts) {
-    String ttsLang = "ja-JP";
-    bool isLangAva = await flutterTts.isLanguageAvailable(ttsLang);
-
-    if (isLangAva) {
-      flutterTts.setLanguage(ttsLang);
-      text = text.replaceAll(new RegExp(r'～'), '　'); // ～ remove in speaking
-      await flutterTts.speak(text);
-    } else {
-      print('language not available');
-      return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          // return object of type Dialog
-          return AlertDialog(
-            title: new Text("Text To Speech for Japanese is not available :("),
-            content: new Text(
-                "Please install the Text To Speech engine for Japanese first, then restart the app. For Android, Google TTS is available on the Play Store."),
-            actions: <Widget>[
-              // usually buttons at the bottom of the dialog
-              FlatButton(
-                child: new Text("OK"),
-                onPressed: () {
-                  Navigator.of(context).pop(ConfirmAction.CANCEL);
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-}
-
 Widget buildCard(ListTile listTile) {
   return Card(
       elevation: 2.0,
@@ -648,6 +626,8 @@ Widget buildCard(ListTile listTile) {
 }
 
 Widget makeSearchList(Vocal vocal, {BuildContext context}) {
+
+  Speak speak = Speak();
 
   bool isFav =  Provider.of<AppModel>(context).isFav(vocal.no);
 
@@ -680,7 +660,7 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
       ],
     ),
     onTap: () {
-      speak(vocal.hiragana, context);
+      speak.tts(vocal.hiragana, context);
     },
     onLongPress: () {
       Provider.of<AppModel>(context).toggle(vocal.no, isFav);
