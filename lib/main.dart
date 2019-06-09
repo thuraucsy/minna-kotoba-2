@@ -584,10 +584,6 @@ class _MyAppState extends State<MyHomePage> {
   }
 }
 
-bool isZawgyi() {
-  return PrefService.getBool("switch_zawgyi") ?? false;
-}
-
 Future<List<Chapter>> fetchPhotos(context) async {
 
   String loadString = isZawgyi() ? 'dataZawgyi.json' : 'data.json';

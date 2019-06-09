@@ -50,7 +50,9 @@ class _FlashCardState extends State<FlashCard> {
                 }
 
                 Text noText = Text(widget.words[index].no);
-                Text showText = Text(meaning, style: TextStyle(fontSize: 30.0));
+                Text showText = Text(meaning, style: (!isZawgyi() && widget.selectedMeaning == listMeaning[0]) ?
+                TextStyle(fontSize: 30.0, fontFamily: 'Masterpiece') :
+                TextStyle(fontSize: 30.0));
                 Text hideText = Text(japanese, style: TextStyle(fontSize: 30.0));
 
                 if (widget.selectedMemorizing == listMemorizing[1]) {
