@@ -29,6 +29,7 @@ dependencies:
   dynamic_theme: ^1.0.0
   provider: ^2.0.1+1
   transformer_page_view: ^0.1.6
+  audioplayers: ^0.12.1
 
 dev_dependencies:
   flutter_test:

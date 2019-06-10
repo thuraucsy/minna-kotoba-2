@@ -173,7 +173,7 @@ class _MyAppState extends State<MyHomePage> {
                 child: meaningText,
               ),
               onTap: () {
-                speak.tts(_chapters[_drawerIndex].words[index].kanji, context);
+                speak.tts(_chapters[_drawerIndex].words[index], context);
                 setState(() {
                   if (_isShowKotoba.length > 0) {
                     int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
@@ -245,7 +245,7 @@ class _MyAppState extends State<MyHomePage> {
           ],
         ),
         onTap: () {
-          speak.tts(vocal.hiragana, context);
+          speak.tts(vocal, context);
         },
         onLongPress: () {
           Provider.of<AppModel>(context).toggle(vocal.no, isFav);
@@ -305,6 +305,12 @@ class _MyAppState extends State<MyHomePage> {
       PreferenceTitle('Sound'),
       SwitchPreference('Text To Speech for Japanese', 'switch_tts',
           defaultVal: true),
+      DropdownPreference(
+        'Playback Source',
+        'list_source',
+        defaultVal: listTtsSource[0],
+        values: listTtsSource,
+      ),
       PreferenceTitle('Personalization'),
       RadioPreference(
         'Day Mode',
@@ -656,7 +662,7 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
       ],
     ),
     onTap: () {
-      speak.tts(vocal.hiragana, context);
+      speak.tts(vocal, context);
     },
     onLongPress: () {
       Provider.of<AppModel>(context).toggle(vocal.no, isFav);

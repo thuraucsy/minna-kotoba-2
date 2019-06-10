@@ -111,7 +111,7 @@ class _FlashCardState extends State<FlashCard> {
                       });
                     }
 
-                    speak.tts(widget.words[index].kanji, context);
+                    speak.tts(widget.words[index], context);
                   },
                   onLongPress: () {
                     print('onLongPress');
