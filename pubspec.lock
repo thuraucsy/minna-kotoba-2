@@ -275,6 +275,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.15"
+  zawgyi_converter:
+    dependency: "direct main"
+    description:
+      name: zawgyi_converter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4+pre-v0.2"
 sdks:
   dart: ">=2.2.0 <3.0.0"
   flutter: ">=0.1.4 <2.0.0"

@@ -5,6 +5,7 @@ import 'package:preferences/preferences.dart'; // setting page
 import 'package:flutter_speed_dial/flutter_speed_dial.dart'; // floating action button
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:provider/provider.dart';
+
 import 'package:minna_kotoba_2/Chapter.dart';
 import 'package:minna_kotoba_2/AppModel.dart';
 import 'package:minna_kotoba_2/FlashCard.dart';
@@ -132,7 +133,7 @@ class _MyAppState extends State<MyHomePage> {
           }
 
           Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
-              style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
+              style: TextStyle(fontFamily: 'Masterpiece'));
 
           if (selectedMeaning == listMeaning[1]) {
             meaningText = Text(_chapters[_drawerIndex].words[index].english);
@@ -216,7 +217,7 @@ class _MyAppState extends State<MyHomePage> {
 
     Widget makeList(Vocal vocal, bool isFav) {
 
-      Text myanmarText = Text(vocal.myanmar, style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
+      Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
 
       return buildCard(ListTile(
         title: Column(
@@ -330,12 +331,7 @@ class _MyAppState extends State<MyHomePage> {
         },
       ),
       PreferenceTitle('Myanmar Font'),
-      SwitchPreference('Zawgyi', 'switch_zawgyi', onChange: () {
-        _chapters.clear();
-        _allWords.clear();
-        _allVocals.clear();
-        initializeVar();
-      },)
+      SwitchPreference('Zawgyi Keyboard', 'switch_zawgyi')
     ]);
   }
 
@@ -591,11 +587,8 @@ class _MyAppState extends State<MyHomePage> {
 }
 
 Future<List<Chapter>> fetchPhotos(context) async {
-
-  String loadString = isZawgyi() ? 'dataZawgyi.json' : 'data.json';
-
   final response =
-      await DefaultAssetBundle.of(context).loadString('assets/$loadString');
+      await DefaultAssetBundle.of(context).loadString('assets/data.json');
   return compute(parseChapters, response);
 }
 
@@ -633,7 +626,7 @@ Widget makeSearchList(Vocal vocal, {BuildContext context}) {
 
   bool isFav =  Provider.of<AppModel>(context).isFav(vocal.no);
 
-  Text myanmarText = Text(vocal.myanmar, style: isZawgyi() ? null : TextStyle(fontFamily: 'Masterpiece'));
+  Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
 
   return buildCard(ListTile(
     title: Column(
@@ -708,6 +701,13 @@ class VocalSearch extends SearchDelegate<Vocal> {
   }
 
   List<Vocal> filterSearch(String query) {
+
+    if (isZawgyi()) {
+      query = zawgyiConverter.zawgyiToUnicode(query);
+    }
+
+    print('filterSearchs $query');
+
     List<Vocal> searchList = List<Vocal>();
     searchList.addAll(vocals);
     if (query.isNotEmpty) {
