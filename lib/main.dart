@@ -139,6 +139,12 @@ class _MyAppState extends State<MyHomePage> {
             meaningText = Text(_chapters[_drawerIndex].words[index].english);
           }
 
+          if (selectedMemorizing == listMemorizing[1]) {
+            Text tmpText = japaneseText;
+            japaneseText = meaningText;
+            meaningText = tmpText;
+          }
+
           // favorite condition
           bool isFav =
               Provider.of<AppModel>(context).isFav(_chapters[_drawerIndex].words[index].no);
@@ -154,20 +160,14 @@ class _MyAppState extends State<MyHomePage> {
                 ],
               ),
               title: AnimatedOpacity(
-                opacity: (selectedMemorizing != listMemorizing[0] ||
-                        (_isShowKotoba.length == 0 ||
-                            (_isShowKotoba.contains(
-                                _chapters[_drawerIndex].words[index].no))))
-                    ? 1.0
-                    : 0.0,
+                opacity: 1.0,
                 duration: Duration(milliseconds: 500),
                 child: japaneseText,
               ),
               subtitle: AnimatedOpacity(
-                opacity: (selectedMemorizing != listMemorizing[1] ||
-                        (_isShowKotoba.length == 0 ||
+                opacity: (_isShowKotoba.length == 0 ||
                             (_isShowKotoba.contains(
-                                _chapters[_drawerIndex].words[index].no))))
+                                _chapters[_drawerIndex].words[index].no)))
                     ? 1.0
                     : 0.0,
                 duration: Duration(milliseconds: 500),
