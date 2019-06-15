@@ -5,6 +5,7 @@ import 'package:preferences/preferences.dart'; // setting page
 import 'package:flutter_speed_dial/flutter_speed_dial.dart'; // floating action button
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:provider/provider.dart';
+import 'package:admob_flutter/admob_flutter.dart';
 
 import 'package:minna_kotoba_2/Chapter.dart';
 import 'package:minna_kotoba_2/AppModel.dart';
@@ -14,6 +15,7 @@ import 'package:minna_kotoba_2/GlobalVar.dart';
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
+  Admob.initialize(getAppId());
   runApp(ChangeNotifierProvider(
     builder: (context) => AppModel(),
     child: MyApp(),
@@ -117,88 +119,94 @@ class _MyAppState extends State<MyHomePage> {
     String selectedMemorizing =
         PrefService.getString("list_memorizing") ?? listMemorizing[0];
 
-    return Container(
-      child: ListView.builder(
-        scrollDirection: Axis.vertical,
-        controller: _scrollController,
-        shrinkWrap: true,
-        itemCount: _chapters[_drawerIndex].words.length,
-        itemBuilder: (BuildContext context, int index) {
-          Text japaneseText =
+    return Stack(
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.only(bottom: 66.0),
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            controller: _scrollController,
+            shrinkWrap: true,
+            itemCount: _chapters[_drawerIndex].words.length,
+            itemBuilder: (BuildContext context, int index) {
+              Text japaneseText =
               Text(_chapters[_drawerIndex].words[index].hiragana);
-          if (selectedJapanese == listJapanese[1]) {
-            japaneseText = Text(_chapters[_drawerIndex].words[index].kanji);
-          } else if (selectedJapanese == listJapanese[2]) {
-            japaneseText = Text(_chapters[_drawerIndex].words[index].romaji);
-          }
+              if (selectedJapanese == listJapanese[1]) {
+                japaneseText = Text(_chapters[_drawerIndex].words[index].kanji);
+              } else if (selectedJapanese == listJapanese[2]) {
+                japaneseText = Text(_chapters[_drawerIndex].words[index].romaji);
+              }
 
-          Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
-              style: TextStyle(fontFamily: 'Masterpiece'));
+              Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
+                  style: TextStyle(fontFamily: 'Masterpiece'));
 
-          if (selectedMeaning == listMeaning[1]) {
-            meaningText = Text(_chapters[_drawerIndex].words[index].english);
-          }
+              if (selectedMeaning == listMeaning[1]) {
+                meaningText = Text(_chapters[_drawerIndex].words[index].english);
+              }
 
-          if (selectedMemorizing == listMemorizing[1]) {
-            Text tmpText = japaneseText;
-            japaneseText = meaningText;
-            meaningText = tmpText;
-          }
+              if (selectedMemorizing == listMemorizing[1]) {
+                Text tmpText = japaneseText;
+                japaneseText = meaningText;
+                meaningText = tmpText;
+              }
 
-          // favorite condition
-          bool isFav =
+              // favorite condition
+              bool isFav =
               Provider.of<AppModel>(context).isFav(_chapters[_drawerIndex].words[index].no);
 
-          return buildCard(
-            ListTile(
-              trailing: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(isFav ? Icons.favorite : Icons.favorite_border,
-                      color: Colors.redAccent),
-                  Text(_chapters[_drawerIndex].words[index].no),
-                ],
-              ),
-              title: AnimatedOpacity(
-                opacity: 1.0,
-                duration: Duration(milliseconds: 500),
-                child: japaneseText,
-              ),
-              subtitle: AnimatedOpacity(
-                opacity: (_isShowKotoba.length == 0 ||
-                            (_isShowKotoba.contains(
-                                _chapters[_drawerIndex].words[index].no)))
-                    ? 1.0
-                    : 0.0,
-                duration: Duration(milliseconds: 500),
-                child: meaningText,
-              ),
-              onTap: () {
-                speak.tts(_chapters[_drawerIndex].words[index], context);
-                setState(() {
-                  if (_isShowKotoba.length > 0) {
-                    int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
-                    if (removeInd > -1) {
-                      _isShowKotoba.removeAt(removeInd);
-                      print('_isShowKotoba removeInd $removeInd');
-                    } else {
-                      _isShowKotoba.add(_chapters[_drawerIndex].words[index].no);
-                      print('_isShowKotoba add ${_chapters[_drawerIndex].words[index].no}');
-                    }
-                  }
-                });
-              },
-              onLongPress: () {
-                Provider.of<AppModel>(context).toggle(_chapters[_drawerIndex].words[index].no, isFav);
-              },
-            ),
-          );
-        },
-      ),
+              return buildCard(
+                ListTile(
+                  trailing: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                          color: Colors.redAccent),
+                      Text(_chapters[_drawerIndex].words[index].no),
+                    ],
+                  ),
+                  title: AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: Duration(milliseconds: 500),
+                    child: japaneseText,
+                  ),
+                  subtitle: AnimatedOpacity(
+                    opacity: (_isShowKotoba.length == 0 ||
+                        (_isShowKotoba.contains(
+                            _chapters[_drawerIndex].words[index].no)))
+                        ? 1.0
+                        : 0.0,
+                    duration: Duration(milliseconds: 500),
+                    child: meaningText,
+                  ),
+                  onTap: () {
+                    speak.tts(_chapters[_drawerIndex].words[index], context);
+                    setState(() {
+                      if (_isShowKotoba.length > 0) {
+                        int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
+                        if (removeInd > -1) {
+                          _isShowKotoba.removeAt(removeInd);
+                          print('_isShowKotoba removeInd $removeInd');
+                        } else {
+                          _isShowKotoba.add(_chapters[_drawerIndex].words[index].no);
+                          print('_isShowKotoba add ${_chapters[_drawerIndex].words[index].no}');
+                        }
+                      }
+                    });
+                  },
+                  onLongPress: () {
+                    Provider.of<AppModel>(context).toggle(_chapters[_drawerIndex].words[index].no, isFav);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        getAdmobBanner()
+      ],
     );
   }
 
-  Container _buildSearchBodyList(BuildContext context,
+  Widget _buildSearchBodyList(BuildContext context,
       {bool isFavPage = false}) {
     Set favoriteList = Provider.of<AppModel>(context).get();
     List<Vocal> favVocals = [];
@@ -254,32 +262,38 @@ class _MyAppState extends State<MyHomePage> {
       ));
     }
 
-    return Container(
-      child: ListView.builder(
-          controller: _scrollController,
-          itemCount: isFavPage ? favVocals.length : _allWords.length,
-          itemBuilder: (context, index) {
-            if (isFavPage) {
-              return makeList(favVocals[index], true);
-            } else {
-              if (_allWords[index] is ChapterTitle) {
-                ChapterTitle chapterTitle = _allWords[index] as ChapterTitle;
-                return ListTile(
-                    title: Text(
-                  chapterTitle.title,
-                  style: Theme.of(context).textTheme.headline,
-                ));
-              } else if (_allWords[index] is Vocal) {
-                Vocal vocal = _allWords[index] as Vocal;
+    return Stack(
+          children: <Widget>[
+            Container(
+              padding: EdgeInsets.only(bottom: 66.0),
+              child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: isFavPage ? favVocals.length : _allWords.length,
+                  itemBuilder: (context, index) {
+                    if (isFavPage) {
+                      return makeList(favVocals[index], true);
+                    } else {
+                      if (_allWords[index] is ChapterTitle) {
+                        ChapterTitle chapterTitle = _allWords[index] as ChapterTitle;
+                        return ListTile(
+                            title: Text(
+                              chapterTitle.title,
+                              style: Theme.of(context).textTheme.headline,
+                            ));
+                      } else if (_allWords[index] is Vocal) {
+                        Vocal vocal = _allWords[index] as Vocal;
 
-                // favorite condition
-                bool isFav = Provider.of<AppModel>(context).isFav(vocal.no);
+                        // favorite condition
+                        bool isFav = Provider.of<AppModel>(context).isFav(vocal.no);
 
-                return makeList(vocal, isFav);
-              }
-            }
-          }),
-    );
+                        return makeList(vocal, isFav);
+                      }
+                    }
+                  }),
+            ),
+            getAdmobBanner()
+          ]
+      );
   }
 
   PreferencePage _preferencePage(BuildContext context) {
