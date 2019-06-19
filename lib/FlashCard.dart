@@ -11,9 +11,14 @@ class FlashCard extends StatefulWidget {
   final String selectedJapanese;
   final String selectedMeaning;
   final String selectedMemorizing;
+  final bool isAllVocals;
 
   FlashCard(this.words, this.selectedJapanese, this.selectedMeaning,
-      this.selectedMemorizing);
+      this.selectedMemorizing, this.isAllVocals) {
+    if (isAllVocals) {
+      words.shuffle();
+    }
+  }
 
   @override
   _FlashCardState createState() => new _FlashCardState();

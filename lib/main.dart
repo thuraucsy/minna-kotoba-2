@@ -431,7 +431,7 @@ class _MyAppState extends State<MyHomePage> {
                 ),
               ),
               Visibility(
-                visible: isShowDrawerMenu,
+                visible: (_tabIndex == 0 || _tabIndex == 1),
                 child: IconButton(
                     icon: Icon(Icons.crop_portrait),
                     onPressed: () {
@@ -439,10 +439,11 @@ class _MyAppState extends State<MyHomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => FlashCard(
-                            _chapters[_drawerIndex].words,
+                          (_tabIndex == 1) ? _allVocals : _chapters[_drawerIndex].words,
                             PrefService.getString("list_japanese") ?? listJapanese[0],
                             PrefService.getString("list_meaning") ?? listMeaning[0],
                           PrefService.getString("list_memorizing") ?? listMemorizing[0],
+                          _tabIndex == 1,
                         )),
                       );
                     }
