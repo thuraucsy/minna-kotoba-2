@@ -11,30 +11,29 @@ class FlashCard extends StatefulWidget {
   final String selectedJapanese;
   final String selectedMeaning;
   final String selectedMemorizing;
-  final bool isAllVocals;
+  final String appBar;
 
   FlashCard(this.words, this.selectedJapanese, this.selectedMeaning,
-      this.selectedMemorizing, this.isAllVocals) {
-    if (isAllVocals) {
-      words.shuffle();
-    }
-  }
+      this.selectedMemorizing, this.appBar);
 
   @override
-  _FlashCardState createState() => new _FlashCardState();
+  _FlashCardState createState() => new _FlashCardState(appBar);
 }
 
 class _FlashCardState extends State<FlashCard> {
 
   final List<String> toggleNo = [];
   Speak speak = Speak();
+  final String appBar;
+
+  _FlashCardState(this.appBar);
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Flash Card"),
+        title: Text(this.appBar),
         centerTitle: false,
       ),
       body: Center(

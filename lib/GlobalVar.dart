@@ -9,7 +9,8 @@ final String appTitle = "Minna Kotoba 2";
 final List<String> listJapanese = ['Kana', 'Kanji', 'Romaji'],
     listMeaning = ['Myanmar', 'English'],
     listMemorizing = ['Meaning', 'Japanese'],
-    listTtsSource = ['TTS Engine', 'JapanesePod101'];
+    listTtsSource = ['TTS Engine', 'JapanesePod101'],
+    searchFlashCardLevel = ['N5', 'N4'];
 final ZawgyiConverter zawgyiConverter = ZawgyiConverter();
 
 
@@ -19,18 +20,18 @@ bool isZawgyi() {
 
 String getAppId() {
   if (Platform.isIOS) {
-    return 'ca-app-pub-3940256099942544~1458002511';
+    return 'ca-app-pub-5000919186848747~7217001778';
   } else if (Platform.isAndroid) {
-    return 'ca-app-pub-3940256099942544~3347511713';
+    return 'ca-app-pub-5000919186848747~9280169707';
   }
   return null;
 }
 
 String getBannerAdUnitId() {
   if (Platform.isIOS) {
-    return 'ca-app-pub-3940256099942544/2934735716';
+    return 'ca-app-pub-5000919186848747/9499661554';
   } else if (Platform.isAndroid) {
-    return 'ca-app-pub-3940256099942544/6300978111';
+    return 'ca-app-pub-5000919186848747/5121378943';
   }
   return null;
 }
@@ -38,7 +39,7 @@ String getBannerAdUnitId() {
 Widget getAdmobBanner() {
   return Positioned(
       bottom: 16.0,
-      left: 8.0,
+      left: 10.0,
       child: AdmobBanner(
         adUnitId: getBannerAdUnitId(),
         adSize: AdmobBannerSize.BANNER,

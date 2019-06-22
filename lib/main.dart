@@ -61,6 +61,8 @@ class _MyAppState extends State<MyHomePage> {
   List<Chapter> _chapters;
   List<ListItem> _allWords = [];
   List<Vocal> _allVocals = [];
+  List<Vocal> _allN5Vocals = [];
+  List<Vocal> _allN4Vocals = [];
   ScrollController _scrollController = new ScrollController();
   Speak speak = Speak();
 
@@ -317,6 +319,13 @@ class _MyAppState extends State<MyHomePage> {
         defaultVal: listMemorizing[0],
         values: listMemorizing,
       ),
+      PreferenceTitle('Search'),
+      DropdownPreference(
+        'Flash Card Level',
+        'search_flash_card_level',
+        defaultVal: searchFlashCardLevel[0],
+        values: searchFlashCardLevel,
+      ),
       PreferenceTitle('Sound'),
       SwitchPreference('Text To Speech for Japanese', 'switch_tts',
           defaultVal: true),
@@ -359,7 +368,16 @@ class _MyAppState extends State<MyHomePage> {
         _allWords.add(ChapterTitle(_chapters[i].title));
         _allWords.addAll(_chapters[i].words);
         _allVocals.addAll(_chapters[i].words);
+        _allN4Vocals.addAll(_chapters[i].words);
+        if (i < 25) {
+          _allN5Vocals.addAll(_chapters[i].words);
+        }
       }
+
+      // shuffle for N5, N4 Vocals for Shuffle Card Usage
+      _allN5Vocals.shuffle();
+      _allN4Vocals.shuffle();
+
       print('_allWords ${_allWords.length}');
     }).catchError((error) {
       print('fetchPhotos error $error');
@@ -379,6 +397,8 @@ class _MyAppState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final appTitle = 'Minna Kotoba 2';
+    String selectedSearchFCLevel =
+        PrefService.getString("search_flash_card_level") ?? searchFlashCardLevel[0];
 
     Future<ConfirmAction> _clearFav() {
       // flutter defined function
@@ -439,11 +459,11 @@ class _MyAppState extends State<MyHomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => FlashCard(
-                          (_tabIndex == 1) ? _allVocals : _chapters[_drawerIndex].words,
+                          (_tabIndex == 1) ? (selectedSearchFCLevel == searchFlashCardLevel[0] ? _allN5Vocals : _allN4Vocals) : _chapters[_drawerIndex].words,
                             PrefService.getString("list_japanese") ?? listJapanese[0],
                             PrefService.getString("list_meaning") ?? listMeaning[0],
-                          PrefService.getString("list_memorizing") ?? listMemorizing[0],
-                          _tabIndex == 1,
+                            PrefService.getString("list_memorizing") ?? listMemorizing[0],
+                            "Flash Card"
                         )),
                       );
                     }
