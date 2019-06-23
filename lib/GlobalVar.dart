@@ -6,6 +6,7 @@ import 'package:zawgyi_converter/zawgyi_converter.dart';
 
 enum ConfirmAction { CANCEL, ACCEPT }
 final String appTitle = "Minna Kotoba 2";
+final String appVersion = "Version 2.0";
 final List<String> listJapanese = ['Kana', 'Kanji', 'Romaji'],
     listMeaning = ['Myanmar', 'English'],
     listMemorizing = ['Meaning', 'Japanese'],
@@ -13,9 +14,15 @@ final List<String> listJapanese = ['Kana', 'Kanji', 'Romaji'],
     searchFlashCardLevel = ['N5', 'N4'];
 final ZawgyiConverter zawgyiConverter = ZawgyiConverter();
 
-
 bool isZawgyi() {
   return PrefService.getBool("switch_zawgyi") ?? false;
+}
+
+bool isDarkTheme() {
+  return (PrefService.getString('ui_theme') == null ||
+          PrefService.getString('ui_theme') == "light")
+      ? false
+      : true;
 }
 
 String getAppId() {
@@ -43,6 +50,5 @@ Widget getAdmobBanner() {
       child: AdmobBanner(
         adUnitId: getBannerAdUnitId(),
         adSize: AdmobBannerSize.BANNER,
-      )
-  );
+      ));
 }

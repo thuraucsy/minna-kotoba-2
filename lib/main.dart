@@ -12,6 +12,7 @@ import 'package:minna_kotoba_2/AppModel.dart';
 import 'package:minna_kotoba_2/FlashCard.dart';
 import 'package:minna_kotoba_2/Speak.dart';
 import 'package:minna_kotoba_2/GlobalVar.dart';
+import 'package:minna_kotoba_2/AboutPage.dart';
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
@@ -76,13 +77,13 @@ class _MyAppState extends State<MyHomePage> {
   }
 
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> _chapters) {
-    bool isDarkTheme = (PrefService.getString('ui_theme') == null || PrefService.getString('ui_theme') == "light") ? false : true;
+
 
     List<Widget> drawer = [
       DrawerHeader(
         decoration: BoxDecoration(
             image: DecorationImage(
-                image: isDarkTheme ? AssetImage('assets/logo_dark.png') : AssetImage('assets/logo.png'),
+                image: isDarkTheme() ? AssetImage('assets/logo_dark.png') : AssetImage('assets/logo.png'),
                 fit: BoxFit.cover,
             ),
         )
@@ -354,7 +355,15 @@ class _MyAppState extends State<MyHomePage> {
         },
       ),
       PreferenceTitle('Myanmar Font'),
-      SwitchPreference('Zawgyi Keyboard', 'switch_zawgyi')
+      SwitchPreference('Zawgyi Keyboard', 'switch_zawgyi'),
+      PreferenceTitle('About'),
+      ListTile(
+        onTap: () =>
+          Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => AboutPage())),
+          title: Text("About"),
+          subtitle: Text(appVersion),
+      )
     ]);
   }
 
