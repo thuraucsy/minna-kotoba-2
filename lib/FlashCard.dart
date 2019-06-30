@@ -37,7 +37,7 @@ class _FlashCardState extends State<FlashCard> {
         centerTitle: false,
       ),
       body: Center(
-          child: new TransformerPageView(
+          child: TransformerPageView(
               itemBuilder: (BuildContext context, int index) {
 
                 String japanese = widget.words[index].hiragana;

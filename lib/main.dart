@@ -1,4 +1,3 @@
-import 'dart:convert'; // json using
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // compute using
 import 'package:preferences/preferences.dart'; // setting page
@@ -7,12 +6,13 @@ import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:admob_flutter/admob_flutter.dart';
 
-import 'package:minna_kotoba_2/Chapter.dart';
-import 'package:minna_kotoba_2/AppModel.dart';
-import 'package:minna_kotoba_2/FlashCard.dart';
-import 'package:minna_kotoba_2/Speak.dart';
-import 'package:minna_kotoba_2/GlobalVar.dart';
-import 'package:minna_kotoba_2/AboutPage.dart';
+import 'Chapter.dart';
+import 'AppModel.dart';
+import 'FlashCard.dart';
+import 'Speak.dart';
+import 'GlobalVar.dart';
+import 'AboutPage.dart';
+import 'VocalSearch.dart';
 
 void main() async {
   await PrefService.init(prefix: 'pref_');
@@ -26,17 +26,17 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new DynamicTheme(
+    return DynamicTheme(
         defaultBrightness: Brightness.light,
         data: (brightness) => ThemeData(
               primarySwatch: Colors.amber,
               brightness: brightness,
             ),
         themedWidgetBuilder: (context, theme) {
-          return new MaterialApp(
+          return MaterialApp(
             title: appTitle,
             theme: theme,
-            home: new MyHomePage(title: appTitle),
+            home: MyHomePage(title: appTitle),
           );
         });
   }
@@ -48,7 +48,7 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyAppState createState() => new _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyHomePage> {
@@ -64,7 +64,7 @@ class _MyAppState extends State<MyHomePage> {
   List<Vocal> _allVocals = [];
   List<Vocal> _allN5Vocals = [];
   List<Vocal> _allN4Vocals = [];
-  ScrollController _scrollController = new ScrollController();
+  ScrollController _scrollController = ScrollController();
   Speak speak = Speak();
 
   void _toggleTheShuffle() {
@@ -77,17 +77,14 @@ class _MyAppState extends State<MyHomePage> {
   }
 
   List<Widget> _buildDrawerList(BuildContext context, List<Chapter> _chapters) {
-
-
     List<Widget> drawer = [
       DrawerHeader(
-        decoration: BoxDecoration(
-            image: DecorationImage(
-                image: isDarkTheme() ? AssetImage('assets/logo_dark.png') : AssetImage('assets/logo.png'),
-                fit: BoxFit.cover,
-            ),
-        )
-      ),
+          decoration: BoxDecoration(
+        image: DecorationImage(
+          image: logoAsset(),
+          fit: BoxFit.cover,
+        ),
+      )),
     ];
 
     List<Widget> chapterTile = [];
@@ -133,18 +130,21 @@ class _MyAppState extends State<MyHomePage> {
             itemCount: _chapters[_drawerIndex].words.length,
             itemBuilder: (BuildContext context, int index) {
               Text japaneseText =
-              Text(_chapters[_drawerIndex].words[index].hiragana);
+                  Text(_chapters[_drawerIndex].words[index].hiragana);
               if (selectedJapanese == listJapanese[1]) {
                 japaneseText = Text(_chapters[_drawerIndex].words[index].kanji);
               } else if (selectedJapanese == listJapanese[2]) {
-                japaneseText = Text(_chapters[_drawerIndex].words[index].romaji);
+                japaneseText =
+                    Text(_chapters[_drawerIndex].words[index].romaji);
               }
 
-              Text meaningText = Text(_chapters[_drawerIndex].words[index].myanmar,
+              Text meaningText = Text(
+                  _chapters[_drawerIndex].words[index].myanmar,
                   style: TextStyle(fontFamily: 'Masterpiece'));
 
               if (selectedMeaning == listMeaning[1]) {
-                meaningText = Text(_chapters[_drawerIndex].words[index].english);
+                meaningText =
+                    Text(_chapters[_drawerIndex].words[index].english);
               }
 
               if (selectedMemorizing == listMemorizing[1]) {
@@ -154,8 +154,8 @@ class _MyAppState extends State<MyHomePage> {
               }
 
               // favorite condition
-              bool isFav =
-              Provider.of<AppModel>(context).isFav(_chapters[_drawerIndex].words[index].no);
+              bool isFav = Provider.of<AppModel>(context)
+                  .isFav(_chapters[_drawerIndex].words[index].no);
 
               return buildCard(
                 ListTile(
@@ -174,8 +174,8 @@ class _MyAppState extends State<MyHomePage> {
                   ),
                   subtitle: AnimatedOpacity(
                     opacity: (_isShowKotoba.length == 0 ||
-                        (_isShowKotoba.contains(
-                            _chapters[_drawerIndex].words[index].no)))
+                            (_isShowKotoba.contains(
+                                _chapters[_drawerIndex].words[index].no)))
                         ? 1.0
                         : 0.0,
                     duration: Duration(milliseconds: 500),
@@ -185,19 +185,23 @@ class _MyAppState extends State<MyHomePage> {
                     speak.tts(_chapters[_drawerIndex].words[index], context);
                     setState(() {
                       if (_isShowKotoba.length > 0) {
-                        int removeInd = _isShowKotoba.indexOf(_chapters[_drawerIndex].words[index].no);
+                        int removeInd = _isShowKotoba
+                            .indexOf(_chapters[_drawerIndex].words[index].no);
                         if (removeInd > -1) {
                           _isShowKotoba.removeAt(removeInd);
                           print('_isShowKotoba removeInd $removeInd');
                         } else {
-                          _isShowKotoba.add(_chapters[_drawerIndex].words[index].no);
-                          print('_isShowKotoba add ${_chapters[_drawerIndex].words[index].no}');
+                          _isShowKotoba
+                              .add(_chapters[_drawerIndex].words[index].no);
+                          print(
+                              '_isShowKotoba add ${_chapters[_drawerIndex].words[index].no}');
                         }
                       }
                     });
                   },
                   onLongPress: () {
-                    Provider.of<AppModel>(context).toggle(_chapters[_drawerIndex].words[index].no, isFav);
+                    Provider.of<AppModel>(context)
+                        .toggle(_chapters[_drawerIndex].words[index].no, isFav);
                   },
                 ),
               );
@@ -209,8 +213,7 @@ class _MyAppState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildSearchBodyList(BuildContext context,
-      {bool isFavPage = false}) {
+  Widget _buildSearchBodyList(BuildContext context, {bool isFavPage = false}) {
     Set favoriteList = Provider.of<AppModel>(context).get();
     List<Vocal> favVocals = [];
 
@@ -227,8 +230,8 @@ class _MyAppState extends State<MyHomePage> {
     }
 
     Widget makeList(Vocal vocal, bool isFav) {
-
-      Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
+      Text myanmarText =
+          Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
 
       return buildCard(ListTile(
         title: Column(
@@ -265,38 +268,36 @@ class _MyAppState extends State<MyHomePage> {
       ));
     }
 
-    return Stack(
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.only(bottom: 66.0),
-              child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: isFavPage ? favVocals.length : _allWords.length,
-                  itemBuilder: (context, index) {
-                    if (isFavPage) {
-                      return makeList(favVocals[index], true);
-                    } else {
-                      if (_allWords[index] is ChapterTitle) {
-                        ChapterTitle chapterTitle = _allWords[index] as ChapterTitle;
-                        return ListTile(
-                            title: Text(
-                              chapterTitle.title,
-                              style: Theme.of(context).textTheme.headline,
-                            ));
-                      } else if (_allWords[index] is Vocal) {
-                        Vocal vocal = _allWords[index] as Vocal;
+    return Stack(children: <Widget>[
+      Container(
+        padding: EdgeInsets.only(bottom: 66.0),
+        child: ListView.builder(
+            controller: _scrollController,
+            itemCount: isFavPage ? favVocals.length : _allWords.length,
+            itemBuilder: (context, index) {
+              if (isFavPage) {
+                return makeList(favVocals[index], true);
+              } else {
+                if (_allWords[index] is ChapterTitle) {
+                  ChapterTitle chapterTitle = _allWords[index] as ChapterTitle;
+                  return ListTile(
+                      title: Text(
+                    chapterTitle.title,
+                    style: Theme.of(context).textTheme.headline,
+                  ));
+                } else if (_allWords[index] is Vocal) {
+                  Vocal vocal = _allWords[index] as Vocal;
 
-                        // favorite condition
-                        bool isFav = Provider.of<AppModel>(context).isFav(vocal.no);
+                  // favorite condition
+                  bool isFav = Provider.of<AppModel>(context).isFav(vocal.no);
 
-                        return makeList(vocal, isFav);
-                      }
-                    }
-                  }),
-            ),
-            getAdmobBanner()
-          ]
-      );
+                  return makeList(vocal, isFav);
+                }
+              }
+            }),
+      ),
+      getAdmobBanner()
+    ]);
   }
 
   PreferencePage _preferencePage(BuildContext context) {
@@ -358,11 +359,10 @@ class _MyAppState extends State<MyHomePage> {
       SwitchPreference('Zawgyi Keyboard', 'switch_zawgyi'),
       PreferenceTitle('About'),
       ListTile(
-        onTap: () =>
-          Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => AboutPage())),
-          title: Text("About"),
-          subtitle: Text(appVersion),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => AboutPage())),
+        title: Text("About"),
+        subtitle: Text(appVersion),
       )
     ]);
   }
@@ -407,7 +407,8 @@ class _MyAppState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final appTitle = 'Minna Kotoba 2';
     String selectedSearchFCLevel =
-        PrefService.getString("search_flash_card_level") ?? searchFlashCardLevel[0];
+        PrefService.getString("search_flash_card_level") ??
+            searchFlashCardLevel[0];
 
     Future<ConfirmAction> _clearFav() {
       // flutter defined function
@@ -416,18 +417,18 @@ class _MyAppState extends State<MyHomePage> {
         builder: (BuildContext context) {
           // return object of type Dialog
           return AlertDialog(
-            title: new Text("Empty favorite?"),
-            content: new Text("This will clear the favorite list."),
+            title: Text("Empty favorite?"),
+            content: Text("This will clear the favorite list."),
             actions: <Widget>[
               // usually buttons at the bottom of the dialog
               FlatButton(
-                child: new Text("Close"),
+                child: Text("Close"),
                 onPressed: () {
                   Navigator.of(context).pop(ConfirmAction.CANCEL);
                 },
               ),
               FlatButton(
-                child: new Text("Clear"),
+                child: Text("Clear"),
                 onPressed: () {
                   Navigator.of(context).pop(ConfirmAction.ACCEPT);
                 },
@@ -454,8 +455,10 @@ class _MyAppState extends State<MyHomePage> {
                         context: context,
                         delegate: (_tabIndex == 0)
                             ? VocalSearch(_chapters[_drawerIndex].words)
-                            : ( _tabIndex == 1 ? VocalSearch(_allVocals) : VocalSearch(Provider.of<AppModel>(context).getFavVocal(_allWords)) )
-                    );
+                            : (_tabIndex == 1
+                                ? VocalSearch(_allVocals)
+                                : VocalSearch(Provider.of<AppModel>(context)
+                                    .getFavVocal(_allWords))));
                   },
                 ),
               ),
@@ -467,16 +470,23 @@ class _MyAppState extends State<MyHomePage> {
                       print('flash card click');
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => FlashCard(
-                          (_tabIndex == 1) ? (selectedSearchFCLevel == searchFlashCardLevel[0] ? _allN5Vocals : _allN4Vocals) : _chapters[_drawerIndex].words,
-                            PrefService.getString("list_japanese") ?? listJapanese[0],
-                            PrefService.getString("list_meaning") ?? listMeaning[0],
-                            PrefService.getString("list_memorizing") ?? listMemorizing[0],
-                            "Flash Card"
-                        )),
+                        MaterialPageRoute(
+                            builder: (context) => FlashCard(
+                                (_tabIndex == 1)
+                                    ? (selectedSearchFCLevel ==
+                                            searchFlashCardLevel[0]
+                                        ? _allN5Vocals
+                                        : _allN4Vocals)
+                                    : _chapters[_drawerIndex].words,
+                                PrefService.getString("list_japanese") ??
+                                    listJapanese[0],
+                                PrefService.getString("list_meaning") ??
+                                    listMeaning[0],
+                                PrefService.getString("list_memorizing") ??
+                                    listMemorizing[0],
+                                "Flash Card")),
                       );
-                    }
-                 ),
+                    }),
               ),
               Visibility(
                 visible: _isShowFavMenu,
@@ -627,165 +637,5 @@ class _MyAppState extends State<MyHomePage> {
         ),
       ),
     );
-  }
-}
-
-Future<List<Chapter>> fetchPhotos(context) async {
-  final response =
-      await DefaultAssetBundle.of(context).loadString('assets/data.json');
-  return compute(parseChapters, response);
-}
-
-List<Chapter> parseChapters(String responseBody) {
-  final parsed = json.decode(responseBody).cast<Map<String, dynamic>>();
-  return parsed.map<Chapter>((json) => Chapter.fromJson(json)).toList();
-}
-
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback onTap;
-  final AppBar appBar;
-
-  const CustomAppBar({Key key, this.onTap, this.appBar}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: appBar);
-  }
-
-  // TODO: implement preferredSize
-  @override
-  Size get preferredSize => new Size.fromHeight(kToolbarHeight);
-}
-
-Widget buildCard(ListTile listTile) {
-  return Card(
-      elevation: 2.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-      child: Container(child: listTile));
-}
-
-Widget makeSearchList(Vocal vocal, {BuildContext context}) {
-
-  Speak speak = Speak();
-
-  bool isFav =  Provider.of<AppModel>(context).isFav(vocal.no);
-
-  Text myanmarText = Text(vocal.myanmar, style: TextStyle(fontFamily: 'Masterpiece'));
-
-  return buildCard(ListTile(
-    title: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text('${vocal.hiragana} ${vocal.romaji}'),
-        Text(vocal.kanji),
-      ],
-    ),
-    contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-    subtitle: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        myanmarText,
-        Text(
-          vocal.english,
-        )
-      ],
-    ),
-    trailing: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(isFav ? Icons.favorite : Icons.favorite_border,
-            color: Colors.redAccent),
-        Text(vocal.no),
-      ],
-    ),
-    onTap: () {
-      speak.tts(vocal, context);
-    },
-    onLongPress: () {
-      Provider.of<AppModel>(context).toggle(vocal.no, isFav);
-    },
-  ));
-}
-
-class VocalSearch extends SearchDelegate<Vocal> {
-  final List<Vocal> vocals;
-
-  VocalSearch(this.vocals);
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      )
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    List<Vocal> searchList = filterSearch(query);
-    return ListView.builder(
-        itemCount: searchList.length,
-        itemBuilder: (BuildContext context, int index) {
-          return makeSearchList(searchList[index], context: context);
-        });
-  }
-
-  List<Vocal> filterSearch(String query) {
-
-    if (isZawgyi()) {
-      query = zawgyiConverter.zawgyiToUnicode(query);
-    }
-
-    print('filterSearchs $query');
-
-    List<Vocal> searchList = List<Vocal>();
-    searchList.addAll(vocals);
-    if (query.isNotEmpty) {
-      List<Vocal> searchListFound = List<Vocal>();
-
-      searchList.forEach((item) {
-        if (item is Vocal &&
-            (item.romaji.toLowerCase().startsWith(query) ||
-                item.hiragana.contains(query) ||
-                item.kanji.contains(query) ||
-                item.english.contains(query) ||
-                item.myanmar.contains(query))) {
-          searchListFound.add(item);
-        }
-      });
-
-      searchList.clear();
-      searchList.addAll(searchListFound);
-    }
-    return searchList;
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    List<Vocal> searchList = filterSearch(query);
-    return ListView.builder(
-        itemCount: searchList.length,
-        itemBuilder: (BuildContext context, int index) {
-          return makeSearchList(searchList[index], context: context);
-        });
-  }
-
-  @override
-  ThemeData appBarTheme(BuildContext context) {
-    return Theme.of(context);
   }
 }

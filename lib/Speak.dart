@@ -19,8 +19,8 @@ class Speak {
       String listSource = PrefService.getString("list_source") ?? listTtsSource[0];
 
       // ～ remove in speaking
-      String kanji = vocal.kanji.replaceAll(new RegExp(r'～'), '　');
-      String kana = vocal.hiragana.replaceAll(new RegExp(r'～'), '　');
+      String kanji = vocal.kanji.replaceAll(RegExp(r'～'), '　');
+      String kana = vocal.hiragana.replaceAll(RegExp(r'～'), '　');
 
       print('speaking ${vocal.kanji} ${vocal.hiragana}');
 
@@ -38,13 +38,13 @@ class Speak {
             builder: (BuildContext context) {
               // return object of type Dialog
               return AlertDialog(
-                title: new Text("Text To Speech for Japanese is not available :("),
-                content: new Text(
+                title: Text("Text To Speech for Japanese is not available :("),
+                content: Text(
                     "Please install the Text To Speech engine for Japanese first, then restart the app. For Android, Google TTS is available on the Play Store."),
                 actions: <Widget>[
                   // usually buttons at the bottom of the dialog
                   FlatButton(
-                    child: new Text("OK"),
+                    child: Text("OK"),
                     onPressed: () {
                       Navigator.of(context).pop(ConfirmAction.CANCEL);
                     },
@@ -67,13 +67,13 @@ class Speak {
               builder: (BuildContext context) {
                 // return object of type Dialog
                 return AlertDialog(
-                  title: new Text("No internet :("),
-                  content: new Text(
+                  title: Text("No internet :("),
+                  content: Text(
                       "Playback source for JapanesePod101 requires internet connection."),
                   actions: <Widget>[
                     // usually buttons at the bottom of the dialog
                     FlatButton(
-                      child: new Text("OK"),
+                      child: Text("OK"),
                       onPressed: () {
                         Navigator.of(context).pop(ConfirmAction.CANCEL);
                       },
