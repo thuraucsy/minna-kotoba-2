@@ -294,6 +294,7 @@ class _MyAppState extends State<MyHomePage> {
                   return makeList(vocal, isFav);
                 }
               }
+              return null;
             }),
       ),
       getAdmobBanner()

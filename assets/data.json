@@ -2137,9 +2137,9 @@
       },
       {
         "no": "6/14",
-        "romaji" : "tomodachi o aimasu",
-        "hiragana" : "ともだちをあいます",
-        "kanji" : "友達を会います",
+        "romaji" : "tomodachi ni aimasu",
+        "hiragana" : "ともだちにあいます",
+        "kanji" : "友達に会います",
         "english" : "meet a friend",
         "myanmar" : "သူငယ်ချင်းနှင့် တွေ့သည်"
       },
@@ -5564,7 +5564,7 @@
         "romaji" : "akemasu",
         "hiragana" : "けます",
         "kanji" : "開けます",
-        "english" : "ဖွင့်သည",
+        "english" : "ဖွင့်သည်",
         "myanmar" : "akemasu"
       },
       {
@@ -5605,15 +5605,15 @@
         "hiragana" : "まがります",
         "kanji" : "曲がります",
         "english" : "turn",
-        "myanmar" : "ကားရပ်နားသည်"
+        "myanmar" : "ကွေ.သည်"
       },
       {
         "no": "14/9",
         "romaji" : "migi e magarimasu",
         "hiragana" : " [ぎへまがります",
         "kanji" : "右へ曲がります",
-        "english" : "/turn to the right",
-        "myanmar" : "ကွေ.သည်"
+        "english" : "turn to the right",
+        "myanmar" : "ညာဘက်သို့ ကွေ့သည်"
       },
       {
         "no": "14/10",
@@ -5621,7 +5621,7 @@
         "hiragana" : "もちます",
         "kanji" : "持ちます",
         "english" : "hold",
-        "myanmar" : "ညာဘက်သို့ ကွေ့သည်"
+        "myanmar" : "ကိုင်ဆာင်သည်"
       },
       {
         "no": "14/11",
@@ -5629,7 +5629,7 @@
         "hiragana" : "とります",
         "kanji" : "取ります",
         "english" : "take, pass",
-        "myanmar" : "ကိုင်ဆာင်သည်"
+        "myanmar" : "ယူဆောင်သည်"
       },
       {
         "no": "14/12",
@@ -5637,7 +5637,7 @@
         "hiragana" : "てつだいます",
         "kanji" : "手伝います",
         "english" : "help (with a task)",
-        "myanmar" : "ယူဆောင်သည်"
+        "myanmar" : "ကူညီလုပ်ကိုင်သည်"
       },
       {
         "no": "14/13",
@@ -5645,7 +5645,7 @@
         "hiragana" : "よびます",
         "kanji" : "呼びます",
         "english" : "call",
-        "myanmar" : "ကူညီလုပ်ကိုင်သည်"
+        "myanmar" : "ခေါ်သည်"
       },
       {
         "no": "14/14",
@@ -5653,7 +5653,7 @@
         "hiragana" : "はなします",
         "kanji" : "話します",
         "english" : "speak, talk",
-        "myanmar" : "ခေါ်သည်"
+        "myanmar" : "စကားပြောသည်"
       },
       {
         "no": "14/15",
@@ -5661,7 +5661,7 @@
         "hiragana" : "みせます",
         "kanji" : "見せます",
         "english" : "show",
-        "myanmar" : "စကားပြောသည်"
+        "myanmar" : "ပြသည်၊ ပြသသည်"
       },
       {
         "no": "14/16",
@@ -5669,7 +5669,7 @@
         "hiragana" : "おしえます",
         "kanji" : "教えます",
         "english" : "tell",
-        "myanmar" : "ပြသည်၊ ပြသသည်"
+        "myanmar" : "ပြောပြသည်"
       },
       {
         "no": "14/17",
@@ -5677,7 +5677,7 @@
         "hiragana" : "じゅうしょをおしえます",
         "kanji" : "住所を教えます",
         "english" : "tell an address",
-        "myanmar" : "ပြောပြသည်"
+        "myanmar" : "လိပ်စာကို ပြောပြသည်"
       },
       {
         "no": "14/18",
