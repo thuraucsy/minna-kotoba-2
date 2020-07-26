@@ -15,6 +15,7 @@ import 'AboutPage.dart';
 import 'VocalSearch.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await PrefService.init(prefix: 'pref_');
   Admob.initialize(getAppId());
   runApp(ChangeNotifierProvider(
